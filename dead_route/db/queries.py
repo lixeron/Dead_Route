@@ -524,3 +524,186 @@ def apply_morale_decay():
     crew = get_alive_npcs()
     for c in crew:
         change_morale(c["id"], -decay)
+
+
+# ── Bus Components ─────────────────────────────────────────
+
+COMPONENT_STATES = ["intact", "worn", "damaged", "destroyed"]
+
+COMPONENTS = {
+    "engine": {
+        "name": "Engine",
+        "intact":    {"fuel_mult": 1.0,  "desc": "Running steady"},
+        "worn":      {"fuel_mult": 1.15, "desc": "Knocking and rough"},
+        "damaged":   {"fuel_mult": 1.40, "desc": "Misfiring badly"},
+        "destroyed": {"fuel_mult": 999,  "desc": "DEAD — cannot travel"},
+    },
+    "windows": {
+        "name": "Windows",
+        "intact":    {"rest_mult": 1.0,  "morale_drain": 0, "desc": "Sealed and secure"},
+        "worn":      {"rest_mult": 0.75, "morale_drain": 0, "desc": "Cracked, drafty"},
+        "damaged":   {"rest_mult": 0.50, "morale_drain": 2, "desc": "Shattered, exposed"},
+        "destroyed": {"rest_mult": 0.0,  "morale_drain": 5, "desc": "GONE — no shelter"},
+    },
+    "armor_plating": {
+        "name": "Armor Plating",
+        "intact":    {"absorb": 0.40, "desc": "Solid protection"},
+        "worn":      {"absorb": 0.25, "desc": "Dented and bent"},
+        "damaged":   {"absorb": 0.10, "desc": "Barely holding"},
+        "destroyed": {"absorb": 0.0,  "desc": "STRIPPED — no protection"},
+    },
+    "wheels": {
+        "name": "Wheels",
+        "intact":    {"travel_mult": 1.0,  "can_flee": True,  "desc": "Solid rubber, good tread"},
+        "worn":      {"travel_mult": 1.20, "can_flee": True,  "desc": "Tread wearing thin"},
+        "damaged":   {"travel_mult": 1.50, "can_flee": False, "desc": "Rim damage, can't flee"},
+        "destroyed": {"travel_mult": 999,  "can_flee": False, "desc": "FLAT — cannot travel"},
+    },
+}
+
+
+def init_bus_components():
+    """Initialize all 4 bus components at 'intact'. Called on new game."""
+    conn = get_connection()
+    for comp in COMPONENTS:
+        conn.execute(
+            "INSERT OR IGNORE INTO bus_components (component, state) VALUES (?, 'intact')",
+            (comp,)
+        )
+    conn.commit()
+    conn.close()
+
+
+def get_component(component: str) -> dict:
+    """Get a component's current state and stats."""
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT * FROM bus_components WHERE component = ?", (component,)
+    ).fetchone()
+    conn.close()
+    if not row:
+        return {"component": component, "state": "intact"}
+    return dict(row)
+
+
+def get_all_components() -> dict[str, dict]:
+    """Get all components with their current states and stat effects."""
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM bus_components").fetchall()
+    conn.close()
+
+    result = {}
+    for r in rows:
+        comp_name = r["component"]
+        state = r["state"]
+        comp_data = COMPONENTS.get(comp_name, {})
+        state_data = comp_data.get(state, {})
+        result[comp_name] = {
+            "component": comp_name,
+            "name": comp_data.get("name", comp_name),
+            "state": state,
+            "stats": state_data,
+        }
+    return result
+
+
+def degrade_component(component: str) -> tuple[str, str]:
+    """
+    Degrade a component by one state level.
+    Returns (old_state, new_state).
+    """
+    current = get_component(component)
+    old_state = current["state"]
+    idx = COMPONENT_STATES.index(old_state)
+
+    if idx >= len(COMPONENT_STATES) - 1:
+        return old_state, old_state  # Already destroyed
+
+    new_state = COMPONENT_STATES[idx + 1]
+    conn = get_connection()
+    conn.execute(
+        "UPDATE bus_components SET state = ? WHERE component = ?",
+        (new_state, component)
+    )
+    conn.commit()
+    conn.close()
+    return old_state, new_state
+
+
+def repair_component(component: str) -> tuple[str, str]:
+    """
+    Repair a component by one state level.
+    Returns (old_state, new_state).
+    """
+    current = get_component(component)
+    old_state = current["state"]
+    idx = COMPONENT_STATES.index(old_state)
+
+    if idx <= 0:
+        return old_state, old_state  # Already intact
+
+    new_state = COMPONENT_STATES[idx - 1]
+    conn = get_connection()
+    conn.execute(
+        "UPDATE bus_components SET state = ? WHERE component = ?",
+        (new_state, component)
+    )
+    conn.commit()
+    conn.close()
+    return old_state, new_state
+
+
+def set_component_state(component: str, state: str):
+    """Force-set a component to a specific state."""
+    conn = get_connection()
+    conn.execute(
+        "UPDATE bus_components SET state = ? WHERE component = ?",
+        (state, component)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_fuel_multiplier() -> float:
+    """Get total fuel cost multiplier from engine + wheels."""
+    comps = get_all_components()
+    engine_mult = comps.get("engine", {}).get("stats", {}).get("fuel_mult", 1.0)
+    wheel_mult = comps.get("wheels", {}).get("stats", {}).get("travel_mult", 1.0)
+
+    # If either is destroyed, travel is impossible
+    if engine_mult >= 999 or wheel_mult >= 999:
+        return 999
+
+    return engine_mult * wheel_mult
+
+
+def get_rest_multiplier() -> float:
+    """Get rest effectiveness multiplier from windows."""
+    comps = get_all_components()
+    return comps.get("windows", {}).get("stats", {}).get("rest_mult", 1.0)
+
+
+def get_damage_absorption() -> float:
+    """Get damage absorption percentage from armor plating."""
+    comps = get_all_components()
+    return comps.get("armor_plating", {}).get("stats", {}).get("absorb", 0.0)
+
+
+def can_bus_travel() -> bool:
+    """Check if the bus is capable of traveling (engine + wheels not destroyed)."""
+    comps = get_all_components()
+    engine_state = comps.get("engine", {}).get("state", "intact")
+    wheels_state = comps.get("wheels", {}).get("state", "intact")
+    return engine_state != "destroyed" and wheels_state != "destroyed"
+
+
+def can_flee_combat() -> bool:
+    """Check if wheels are good enough to flee."""
+    comps = get_all_components()
+    return comps.get("wheels", {}).get("stats", {}).get("can_flee", True)
+
+
+def get_window_morale_drain() -> int:
+    """Get passive morale drain from damaged/destroyed windows."""
+    comps = get_all_components()
+    return comps.get("windows", {}).get("stats", {}).get("morale_drain", 0)

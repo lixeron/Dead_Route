@@ -38,6 +38,9 @@ def create_player(intro_result: dict):
     queries.update_game_state(current_node_id=start_node_id, intro_complete=1)
     queries.mark_node_visited(start_node_id)
 
+    # Initialize bus components
+    queries.init_bus_components()
+
 
 def post_intro_transition():
     """Brief transition from intro to gameplay, introducing the HUD."""

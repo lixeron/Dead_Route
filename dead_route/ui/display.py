@@ -65,16 +65,31 @@ def show_hud():
     )
     print(res_line)
 
-    # Bus status
-    armor_color = Theme.SUCCESS if bus["armor"] > bus["armor_max"] * 0.5 else (
-        Theme.WARNING if bus["armor"] > bus["armor_max"] * 0.25 else Theme.DAMAGE
-    )
-    bus_line = (
-        f"  {styled('Bus Armor:', armor_color)} {bus['armor']}/{bus['armor_max']}  "
-        f"{styled('Fuel Eff:', Color.GRAY)} {bus['fuel_efficiency']:.2f}x  "
-        f"{styled('Crew:', Color.GRAY)} {len(crew)}/{bus['crew_capacity']}"
-    )
-    print(bus_line)
+    # Bus components status
+    try:
+        components = queries.get_all_components()
+        state_styles = {
+            "intact": (Theme.SUCCESS, "OK "),
+            "worn": (Theme.WARNING, "WRN"),
+            "damaged": (Theme.DAMAGE, "DMG"),
+            "destroyed": (Theme.DAMAGE + Color.BOLD, "XXX"),
+        }
+        comp_parts = []
+        for key in ["engine", "armor_plating", "windows", "wheels"]:
+            comp = components.get(key, {})
+            st = comp.get("state", "intact")
+            color, label = state_styles.get(st, (Color.GRAY, "???"))
+            name = comp.get("name", key)
+            comp_parts.append(f"{styled(name + ':', Color.GRAY)}{styled(label, color)}")
+        print(f"  {' '.join(comp_parts)}")
+    except Exception:
+        # Fallback if components not initialized yet
+        armor_color = Theme.SUCCESS if bus["armor"] > bus["armor_max"] * 0.5 else (
+            Theme.WARNING if bus["armor"] > bus["armor_max"] * 0.25 else Theme.DAMAGE
+        )
+        print(f"  {styled('Bus Armor:', armor_color)} {bus['armor']}/{bus['armor_max']}")
+
+    print(f"  {styled('Crew:', Color.GRAY)} {len(crew)}/{bus['crew_capacity']}")
 
     print_styled("=" * width, Color.GRAY)
     print()
@@ -186,3 +201,66 @@ def show_location_description():
         border_color=color,
         title_color=Color.BOLD + color,
     ))
+
+
+def show_bus_status():
+    """Display detailed bus component status with effects."""
+    print()
+    print_styled("  -- BUS STATUS --", Color.BOLD + Color.BRIGHT_WHITE)
+    print()
+
+    state_styles = {
+        "intact":    (Theme.SUCCESS, "INTACT   "),
+        "worn":      (Theme.WARNING, "WORN     "),
+        "damaged":   (Theme.DAMAGE,  "DAMAGED  "),
+        "destroyed": (Theme.DAMAGE + Color.BOLD, "DESTROYED"),
+    }
+
+    try:
+        components = queries.get_all_components()
+    except Exception:
+        print("  Bus component data unavailable.")
+        return
+
+    for key in ["engine", "armor_plating", "windows", "wheels"]:
+        comp = components.get(key, {})
+        name = comp.get("name", key)
+        state = comp.get("state", "intact")
+        stats = comp.get("stats", {})
+        desc = stats.get("desc", "")
+        color, label = state_styles.get(state, (Color.GRAY, "???"))
+
+        print(f"  {styled(f'{name:<16}', Color.BRIGHT_WHITE)}{styled(label, color)}  {Theme.MUTED}{desc}{Color.RESET}")
+
+        # Show gameplay effects for non-intact states
+        if state != "intact":
+            effects = []
+            if "fuel_mult" in stats and stats["fuel_mult"] > 1.0 and stats["fuel_mult"] < 999:
+                effects.append(f"+{int((stats['fuel_mult']-1)*100)}% fuel cost")
+            elif "fuel_mult" in stats and stats["fuel_mult"] >= 999:
+                effects.append("CANNOT TRAVEL")
+            if "rest_mult" in stats and stats["rest_mult"] < 1.0 and stats["rest_mult"] > 0:
+                effects.append(f"-{int((1-stats['rest_mult'])*100)}% rest healing")
+            elif "rest_mult" in stats and stats["rest_mult"] <= 0:
+                effects.append("REST DISABLED")
+            if "absorb" in stats:
+                effects.append(f"{int(stats['absorb']*100)}% damage absorption")
+            if "morale_drain" in stats and stats["morale_drain"] > 0:
+                effects.append(f"-{stats['morale_drain']} trust/phase")
+            if "travel_mult" in stats and stats["travel_mult"] > 1.0 and stats["travel_mult"] < 999:
+                effects.append(f"+{int((stats['travel_mult']-1)*100)}% travel fuel")
+            elif "travel_mult" in stats and stats["travel_mult"] >= 999:
+                effects.append("CANNOT TRAVEL")
+            if "can_flee" in stats and not stats["can_flee"]:
+                effects.append("CANNOT FLEE COMBAT")
+            if effects:
+                print(f"  {'':16}  {Theme.WARNING}{', '.join(effects)}{Color.RESET}")
+        print()
+
+    # Show installed upgrades
+    upgrades = queries.get_installed_upgrades()
+    if upgrades:
+        print_styled("  Installed upgrades:", Color.GRAY)
+        for u in upgrades:
+            print(f"    {styled(u.replace('_', ' ').title(), Theme.INFO)}")
+        print()

@@ -82,6 +82,13 @@ def init_db():
             morale          INTEGER NOT NULL DEFAULT 60
         );
 
+        CREATE TABLE IF NOT EXISTS bus_components (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            component   TEXT UNIQUE NOT NULL,
+            state       TEXT NOT NULL DEFAULT 'intact',
+            CHECK (state IN ('intact', 'worn', 'damaged', 'destroyed'))
+        );
+
         CREATE TABLE IF NOT EXISTS bus_upgrades (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             upgrade_key   TEXT UNIQUE NOT NULL,

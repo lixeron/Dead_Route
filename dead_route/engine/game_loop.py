@@ -17,7 +17,7 @@ from engine.events import pick_random_event, resolve_choice
 from ui.style import Color, Theme, styled, print_styled, clear_screen, print_blank
 from ui.narration import narrator_text, dramatic_pause, scene_break, status_update
 from ui.input import get_choice, press_enter
-from ui.display import show_hud, show_crew_status, show_location_description
+from ui.display import show_hud, show_crew_status, show_location_description, show_bus_status
 
 
 def display_warnings(warnings: list[str]):
@@ -148,10 +148,11 @@ def run():
 
         actions = [
             f"Explore — Scavenge for supplies{phase_warning}",
-            "Upgrade — Improve the bus or train skills",
+            "Upgrade / Repair — Improve or fix the bus",
             "Rest — Recover HP and stamina (costs Food)",
             "Interact — Talk to a crew member",
             "Check Crew — View detailed crew status",
+            "Check Bus — View bus component status",
             "Travel — Move to the next location",
         ]
 
@@ -170,6 +171,10 @@ def run():
             press_enter()
             continue  # Don't advance phase
         elif choice == 5:
+            show_bus_status()
+            press_enter()
+            continue  # Don't advance phase
+        elif choice == 6:
             did_travel = do_travel()
             if not did_travel:
                 continue

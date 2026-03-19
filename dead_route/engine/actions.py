@@ -81,8 +81,17 @@ def _resolve_explore_combat(explorer: dict):
 
     if result["damage_taken"] > 0:
         damage_display(explorer["name"], result["damage_taken"])
-    if result["bus_damage"] > 0:
-        damage_display("The Bus", result["bus_damage"])
+    if result.get("damage_absorbed", 0) > 0:
+        status_update(f"Armor plating absorbed {result['damage_absorbed']} damage")
+    if result.get("component_result") and result["component_result"].get("narrative"):
+        comp = result["component_result"]
+        narrator_text(comp["narrative"])
+        if comp.get("component_hit") and comp["old_state"] != comp["new_state"]:
+            comp_name = queries.COMPONENTS[comp["component_hit"]]["name"]
+            print_styled(
+                f"  !! {comp_name}: {comp['old_state']} -> {comp['new_state']}",
+                Theme.WARNING + Color.BOLD
+            )
     if result.get("collateral_damage"):
         cd = result["collateral_damage"]
         narrator_text(f"In the chaos, {cd['name']} catches a stray hit.")
@@ -147,7 +156,89 @@ def _resolve_explore_scavenge(explorer: dict):
 
 
 def do_upgrade():
-    """Handle the Upgrade action."""
+    """Handle the Upgrade action: install upgrades OR repair damaged components."""
+    from engine.bus_damage import get_repair_options
+
+    # First: choose between upgrade and repair
+    repair_opts = get_repair_options()
+    has_repairs = len(repair_opts) > 0
+
+    if has_repairs:
+        mode_choice = get_choice(
+            ["Install an upgrade", "Repair a damaged component", "Cancel"],
+            prompt="The bus needs work. What's the priority?"
+        )
+        if mode_choice == 2:
+            return
+        if mode_choice == 1:
+            _do_repair(repair_opts)
+            return
+
+    _do_install_upgrade()
+
+
+def _do_repair(repair_opts: list[dict]):
+    """Handle repairing a damaged bus component."""
+    resources = queries.get_resources()
+
+    state_colors = {
+        "destroyed": Theme.DAMAGE + Color.BOLD,
+        "damaged": Theme.DAMAGE,
+        "worn": Theme.WARNING,
+    }
+
+    options = []
+    for opt in repair_opts:
+        cost = opt["cost"]
+        tag = (styled("[CAN AFFORD]", Theme.SUCCESS)
+               if resources["scrap"] >= cost
+               else styled("[Need more scrap]", Theme.DAMAGE))
+        state_color = state_colors.get(opt["current_state"], Color.GRAY)
+        options.append(
+            f"Repair {opt['name']}  — {cost} Scrap  {tag}\n"
+            f"       {styled(opt['current_state'].upper(), state_color)} -> "
+            f"{styled(opt['repair_to'].upper(), Theme.SUCCESS)}  "
+            f"({opt['description']})"
+        )
+    options.append("Cancel")
+
+    narrator_text("You crawl under the bus and assess the damage.")
+    idx = get_choice(options, prompt="What needs fixing?")
+
+    if idx == len(repair_opts):
+        return
+
+    opt = repair_opts[idx]
+    cost = opt["cost"]
+
+    if resources["scrap"] < cost:
+        narrator_text(f"Not enough Scrap. Need {cost}, have {resources['scrap']}.")
+        press_enter()
+        return
+
+    queries.update_resources(scrap=-cost)
+    old_state, new_state = queries.repair_component(opt["component"])
+
+    repair_narratives = {
+        "engine": "You wrestle with rusted bolts and frayed wires. The engine coughs, sputters — then smooths out. Better.",
+        "windows": "You fit scavenged plexiglass and chain-link mesh over the gaps. Not pretty, but it'll keep things out.",
+        "armor_plating": "Scrap metal, a blowtorch, and prayers. The new plating is ugly but solid.",
+        "wheels": "You jack up the bus and work on the wheel assembly. It takes everything you've got, but she's rolling again.",
+    }
+    narrator_text(repair_narratives.get(opt["component"], "You make the repairs."))
+    status_update(f"-{cost} Scrap")
+    status_update(f"{opt['name']}: {old_state} -> {new_state}")
+
+    npcs = queries.get_alive_npcs()
+    mechanic = next((c for c in npcs if c["personality"] == "gruff"), None)
+    if mechanic:
+        dialogue(mechanic["name"], "That'll hold. For now.")
+
+    press_enter()
+
+
+def _do_install_upgrade():
+    """Handle installing a new bus upgrade."""
     upgrades_path = os.path.join(DATA_DIR, "upgrades.json")
     with open(upgrades_path) as f:
         upgrade_data = json.load(f)["upgrades"]
@@ -222,7 +313,6 @@ def do_upgrade():
     narrator_text(data["description"])
     status_update(f"-{cost} Scrap")
 
-    # Banter about upgrade
     npcs = queries.get_alive_npcs()
     mechanic = next((c for c in npcs if c["personality"] == "gruff"), None)
     if mechanic:
@@ -257,6 +347,21 @@ def do_rest():
         narrator_text("You rest on empty stomachs. It barely helps.")
     else:
         narrator_text("The crew rests. Food is shared. Wounds are tended.")
+
+    # Window condition affects rest quality
+    rest_mult = queries.get_rest_multiplier()
+    heal_amount = int(heal_amount * rest_mult)
+
+    if rest_mult <= 0:
+        heal_amount = 0
+        narrator_text(
+            "With every window gone, the bus offers no shelter. The cold, "
+            "the stench, the sounds — nobody sleeps. Nobody heals."
+        )
+    elif rest_mult < 1.0:
+        narrator_text(
+            "The broken windows let the cold in. Rest is fitful at best."
+        )
 
     for c in crew:
         queries.heal_character(c["id"], heal_amount)
@@ -349,6 +454,16 @@ def do_interact():
 def do_travel() -> bool:
     """Handle travel to the next node. Returns True if travel happened."""
     from engine.travel import travel_to_node
+    from engine.bus_damage import check_bus_immobilized
+
+    # Check if bus can move at all
+    if check_bus_immobilized():
+        narrator_text(
+            "The bus isn't going anywhere. The engine or wheels are destroyed. "
+            "You need to repair them before you can travel."
+        )
+        press_enter()
+        return False
 
     state = queries.get_game_state()
     current_node_id = state.get("current_node_id")
@@ -377,16 +492,25 @@ def do_travel() -> bool:
 
     bus = queries.get_bus()
     resources = queries.get_resources()
+
+    # Fuel cost uses component multiplier (engine + wheels condition)
+    fuel_mult = queries.get_fuel_multiplier()
+
     options = []
     for n in visible_nodes:
-        fuel_cost = max(1, int(n["fuel_cost"] * bus["fuel_efficiency"]))
+        fuel_cost = max(1, int(n["fuel_cost"] * bus["fuel_efficiency"] * fuel_mult))
         desc = n.get("edge_description", f"Head to {n['name']}")
         node_type = n["node_type"].replace("_", " ").title()
         affordable = (
             "" if resources["fuel"] >= fuel_cost
             else styled(" [NOT ENOUGH FUEL]", Theme.DAMAGE)
         )
-        options.append(f"{desc}\n       [{node_type}] — Fuel cost: {fuel_cost}{affordable}")
+        penalty = ""
+        if fuel_mult > 1.1:
+            penalty = styled(f" (+{int((fuel_mult-1)*100)}% from damage)", Theme.WARNING)
+        options.append(
+            f"{desc}\n       [{node_type}] — Fuel cost: {fuel_cost}{penalty}{affordable}"
+        )
     options.append("Stay here")
 
     idx = get_choice(options, prompt="Where to next?")

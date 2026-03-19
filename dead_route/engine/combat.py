@@ -107,12 +107,23 @@ def stat_check_combat(crew_member_id: int, base_threat: int = 10) -> dict:
         }
 
     # Apply consequences
-    if result["damage_taken"] > 0:
-        queries.damage_character(crew_member_id, result["damage_taken"])
+    # Armor plating absorbs some crew damage
+    from engine.bus_damage import apply_bus_damage
+    absorption = queries.get_damage_absorption()
+    absorbed = int(result["damage_taken"] * absorption)
+    actual_crew_damage = result["damage_taken"] - absorbed
+    result["damage_absorbed"] = absorbed
 
+    if actual_crew_damage > 0:
+        queries.damage_character(crew_member_id, actual_crew_damage)
+    result["damage_taken"] = actual_crew_damage
+
+    # Apply bus component damage
+    result["component_result"] = None
     if result["bus_damage"] > 0:
-        new_armor = queries.damage_bus(result["bus_damage"])
-        result["bus_destroyed"] = new_armor <= 0
+        comp_result = apply_bus_damage(result["bus_damage"])
+        result["component_result"] = comp_result
+        result["bus_destroyed"] = not queries.can_bus_travel()
 
     actual_ammo = min(result["ammo_used"], resources.get("ammo", 0))
     if actual_ammo > 0:
