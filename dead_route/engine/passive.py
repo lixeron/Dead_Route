@@ -1,0 +1,75 @@
+"""
+Passive systems: resource drains, decay, trust consequences.
+Runs every phase automatically before player actions.
+"""
+
+import random
+from db import queries
+
+STARVATION_DAMAGE = 8
+STAMINA_DRAIN_PER_PHASE = 5
+FUEL_LEAK_PER_DAY = 2
+
+
+def run_passive_systems() -> list[str]:
+    """Run all passive drain/damage systems. Returns list of warning strings."""
+    warnings = []
+    state = queries.get_game_state()
+    resources = queries.get_resources()
+    crew = queries.get_alive_crew()
+    crew_count = len(crew)
+
+    # ── FOOD DRAIN (morning + evening) ──
+    if state["current_phase"] in ("morning", "evening"):
+        food_cost = max(1, crew_count // 2)
+        if resources["food"] >= food_cost:
+            queries.update_resources(food=-food_cost)
+            warnings.append(f"-{food_cost} Food (crew meals)")
+        else:
+            queries.set_resources(food=0)
+            warnings.append("NO FOOD — Crew is starving!")
+            for c in crew:
+                queries.damage_character(c["id"], STARVATION_DAMAGE)
+                if not c["is_player"]:
+                    queries.change_trust(c["id"], -3)
+            warnings.append(f"All crew take {STARVATION_DAMAGE} starvation damage")
+
+    # ── FUEL LEAK (morning only, until upgrade) ──
+    if state["current_phase"] == "morning" and not queries.has_upgrade("fuel_efficiency_kit"):
+        if resources["fuel"] > 0:
+            leak = min(FUEL_LEAK_PER_DAY, resources["fuel"])
+            queries.update_resources(fuel=-leak)
+            warnings.append(f"-{leak} Fuel (engine leak — needs repair upgrade)")
+
+    # ── STAMINA DRAIN ──
+    for c in crew:
+        new_stam = max(0, c["stamina"] - STAMINA_DRAIN_PER_PHASE)
+        queries.update_character(c["id"], stamina=new_stam)
+
+    # ── LOW TRUST CONSEQUENCES ──
+    for c in crew:
+        if c["is_player"]:
+            continue
+        if c["trust"] <= 15 and c["is_alive"]:
+            if random.random() < 0.3:
+                queries.update_character(c["id"], is_alive=0)
+                warnings.append(f"!! {c['name']} has abandoned the bus in the night !!")
+        elif c["trust"] <= 25 and random.random() < 0.15:
+            stolen = random.choice(["food", "ammo", "scrap"])
+            amount = random.randint(1, 2)
+            queries.update_resources(**{stolen: -amount})
+            warnings.append(f"{c['name']} stole {amount} {stolen} — trust is dangerously low")
+
+    # ── CHECK BUS DESTRUCTION ──
+    bus = queries.get_bus()
+    if bus["armor"] <= 0:
+        queries.update_game_state(game_over=1, ending_type="bad")
+        warnings.append("THE BUS IS DESTROYED")
+
+    # ── CHECK PLAYER DEATH ──
+    player = queries.get_player()
+    if not player or not player["is_alive"]:
+        queries.update_game_state(game_over=1, ending_type="bad")
+        warnings.append("YOU ARE DEAD")
+
+    return warnings

@@ -1,0 +1,219 @@
+"""
+Main game loop: phase cycle, day transitions, banter, random events.
+Orchestrates all other engine modules.
+"""
+
+import random
+from db import queries
+from engine.passive import run_passive_systems
+from engine.crisis import check_forced_events
+from engine.actions import (
+    do_explore, do_upgrade, do_rest, do_interact, do_travel,
+    handle_recruitment_from_event
+)
+from engine.endings import handle_haven_arrival, handle_meridian_arrival, handle_game_over
+from engine.banter import get_ambient_banter, get_context
+from engine.events import pick_random_event, resolve_choice
+from ui.style import Color, Theme, styled, print_styled, clear_screen, print_blank
+from ui.narration import narrator_text, dramatic_pause, scene_break, status_update
+from ui.input import get_choice, press_enter
+from ui.display import show_hud, show_crew_status, show_location_description
+
+
+def display_warnings(warnings: list[str]):
+    """Show passive system warnings with appropriate drama."""
+    if not warnings:
+        return
+    print()
+    for w in warnings:
+        if "!!" in w or "DESTROYED" in w or "DEAD" in w:
+            print_styled(f"  !! {w}", Theme.DAMAGE + Color.BOLD)
+            dramatic_pause(1.0)
+        elif "starv" in w.lower() or "stole" in w.lower():
+            print_styled(f"  ! {w}", Theme.WARNING)
+            dramatic_pause(0.5)
+        else:
+            print(f"  {Theme.MUTED}> {w}{Color.RESET}")
+    print()
+    dramatic_pause(0.3)
+
+
+def maybe_show_banter():
+    """50% chance of showing crew banter between phases."""
+    if random.random() > 0.5:
+        return
+    state = queries.get_game_state()
+    resources = queries.get_resources()
+    context = get_context(state, resources)
+    banter = get_ambient_banter(context)
+    if banter:
+        print()
+        print(f"  {Theme.MUTED}{Color.ITALIC}{banter}{Color.RESET}")
+        dramatic_pause(0.4)
+
+
+def check_random_event():
+    """Roll for a random event to fire (25% per phase)."""
+    if random.random() > 0.25:
+        return
+
+    event = pick_random_event()
+    if not event:
+        return
+
+    clear_screen()
+    print_blank(1)
+    scene_break("EVENT")
+
+    narrator_text(event["description"])
+
+    labels = [c["label"] for c in event["choices"]]
+    idx = get_choice(labels, prompt="What do you do?")
+
+    result = resolve_choice(event, idx)
+
+    print()
+    narrator_text(result["text"])
+
+    if result.get("had_skill_check"):
+        if result["skill_passed"]:
+            status_update("Skill check: PASSED")
+        else:
+            print_styled("  ! Skill check: FAILED", Theme.WARNING)
+
+    # Handle recruitment
+    handle_recruitment_from_event(result.get("effects", {}))
+
+    press_enter()
+
+
+def check_special_arrival(node_name: str) -> bool:
+    """Check if arriving at a node triggers an ending. Returns True if game ends."""
+    if node_name == "Haven":
+        handle_haven_arrival()
+        return True
+    if node_name == "Meridian Research Facility":
+        handle_meridian_arrival()
+        return True
+    return False
+
+
+def run():
+    """Main gameplay loop — one phase at a time."""
+    while True:
+        state = queries.get_game_state()
+
+        if state["game_over"]:
+            handle_game_over()
+            return
+
+        # ── Run passive systems ──
+        warnings = run_passive_systems()
+
+        # Re-check game over after passive systems
+        state = queries.get_game_state()
+        if state["game_over"]:
+            if warnings:
+                display_warnings(warnings)
+                press_enter()
+            handle_game_over()
+            return
+
+        # ── Display ──
+        clear_screen()
+        show_hud()
+
+        if warnings:
+            display_warnings(warnings)
+
+        show_location_description()
+
+        # ── Crew banter ──
+        maybe_show_banter()
+
+        # ── Forced crisis events ──
+        check_forced_events()
+        state = queries.get_game_state()
+        if state["game_over"]:
+            handle_game_over()
+            return
+
+        # ── Player action ──
+        phase = state["current_phase"]
+        phase_warning = ""
+        if phase == "midnight":
+            phase_warning = styled(" [EXTREME DANGER]", Theme.DAMAGE + Color.BOLD)
+        elif phase == "evening":
+            phase_warning = styled(" [HIGH DANGER]", Theme.WARNING)
+
+        actions = [
+            f"Explore — Scavenge for supplies{phase_warning}",
+            "Upgrade — Improve the bus or train skills",
+            "Rest — Recover HP and stamina (costs Food)",
+            "Interact — Talk to a crew member",
+            "Check Crew — View detailed crew status",
+            "Travel — Move to the next location",
+        ]
+
+        choice = get_choice(actions, prompt="What do you do this phase?")
+
+        if choice == 0:
+            do_explore()
+        elif choice == 1:
+            do_upgrade()
+        elif choice == 2:
+            do_rest()
+        elif choice == 3:
+            do_interact()
+        elif choice == 4:
+            show_crew_status()
+            press_enter()
+            continue  # Don't advance phase
+        elif choice == 5:
+            did_travel = do_travel()
+            if not did_travel:
+                continue
+
+            # Check for special arrivals
+            node = queries.get_current_node()
+            if node and check_special_arrival(node["name"]):
+                state = queries.get_game_state()
+                if state["game_over"]:
+                    handle_game_over()
+                    return
+
+        # ── Advance phase ──
+        old_day = state["current_day"]
+        new_day, new_phase = queries.advance_phase()
+
+        # Day transition
+        if new_phase == "morning" and new_day > old_day:
+            clear_screen()
+            print_blank(1)
+
+            day_texts = [
+                f"Day {new_day}. The sun crawls over the horizon like it's not sure it wants to.",
+                f"Day {new_day}. Another morning. You're still breathing. Don't take it for granted.",
+                f"Day {new_day} begins. The road stretches on. So do the dead.",
+            ]
+            scene_break(f"DAY {new_day} — MORNING")
+            narrator_text(random.choice(day_texts))
+
+            new_state = queries.get_game_state()
+            if new_state["threat_level"] > state["threat_level"]:
+                print()
+                print_styled(
+                    f"  !! THREAT LEVEL {new_state['threat_level']} !!",
+                    Theme.DAMAGE + Color.BOLD
+                )
+                threat_texts = [
+                    "More of them. Faster. Hungrier. Whatever LAZARUS does, it's getting worse.",
+                    "The hordes are thicker now. You can hear them even during the day.",
+                    "Something's changed. The infected are more aggressive. More coordinated.",
+                ]
+                narrator_text(random.choice(threat_texts))
+
+            press_enter()
+
+        # ── Random event ──
+        check_random_event()

@@ -1,0 +1,445 @@
+"""
+The 4 core actions + travel.
+Each function handles one player action per phase.
+"""
+
+import os
+import json
+import random
+from db import queries
+from engine.combat import stat_check_combat, generate_combat_narrative
+from engine.crew import get_interaction_options, recruit_next_npc
+from ui.style import Color, Theme, styled, print_styled, clear_screen, print_blank
+from ui.narration import (
+    narrator_text, dramatic_pause, status_update,
+    loot_display, damage_display, dialogue, scene_break
+)
+from ui.input import get_choice, get_choice_with_details, press_enter, confirm
+
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+
+
+def do_explore():
+    """Handle the Explore action."""
+    crew = queries.get_alive_crew()
+    state = queries.get_game_state()
+
+    # Pick who goes
+    if len(crew) > 1:
+        names = []
+        for c in crew:
+            hp_pct = int(c["hp"] / c["hp_max"] * 100)
+            warn = " [WOUNDED]" if hp_pct < 40 else ""
+            names.append(
+                f"{c['name']} (Cmbt:{c['combat']} Scav:{c['scavenging']} HP:{hp_pct}%{warn})"
+            )
+        idx = get_choice(names, prompt="Who leads the expedition?")
+        explorer = crew[idx]
+    else:
+        explorer = crew[0]
+
+    # Danger warnings
+    if state["current_phase"] == "midnight":
+        narrator_text(
+            "It's pitch black. You can hear them out there — shuffling, groaning, "
+            "scratching. Exploring now is borderline suicidal."
+        )
+        if not confirm("Send them out anyway?", default_yes=False):
+            return
+    elif state["current_phase"] == "evening":
+        narrator_text(
+            "The sun is setting. Shadows are getting long and things are moving in them."
+        )
+
+    narrator_text(f"{explorer['name']} heads out into the unknown.")
+    dramatic_pause(0.5)
+
+    # Combat chance — MUCH higher at night
+    combat_chances = {
+        "morning": 0.25, "afternoon": 0.40,
+        "evening": 0.60, "midnight": 0.80,
+    }
+    combat_chance = combat_chances.get(state["current_phase"], 0.35)
+    combat_chance = min(0.95, combat_chance + state["threat_level"] * 0.03)
+
+    if random.random() < combat_chance:
+        _resolve_explore_combat(explorer)
+    else:
+        _resolve_explore_scavenge(explorer)
+
+    press_enter()
+
+
+def _resolve_explore_combat(explorer: dict):
+    """Combat encounter during exploration."""
+    narrator_text("Movement. Close. Too close.")
+    dramatic_pause(0.5)
+
+    result = stat_check_combat(explorer["id"])
+    narrative = generate_combat_narrative(result)
+    narrator_text(narrative)
+
+    if result["damage_taken"] > 0:
+        damage_display(explorer["name"], result["damage_taken"])
+    if result["bus_damage"] > 0:
+        damage_display("The Bus", result["bus_damage"])
+    if result.get("collateral_damage"):
+        cd = result["collateral_damage"]
+        narrator_text(f"In the chaos, {cd['name']} catches a stray hit.")
+        damage_display(cd["name"], cd["damage"])
+    if result.get("resource_loss"):
+        for k, v in result["resource_loss"].items():
+            if v < 0:
+                print_styled(f"  ! Lost {abs(v)} {k} in the chaos", Theme.WARNING)
+    if result["loot"]:
+        loot_display(result["loot"])
+    if result["character_died"]:
+        print()
+        print_styled(f"  {explorer['name']} is dead.", Theme.DAMAGE + Color.BOLD)
+        narrator_text("The bus goes quiet. Someone pulls a blanket over what's left.")
+        dramatic_pause(2.0)
+        for c in queries.get_alive_npcs():
+            queries.change_trust(c["id"], random.randint(-8, -3))
+
+
+def _resolve_explore_scavenge(explorer: dict):
+    """Peaceful scavenging during exploration."""
+    scav_skill = explorer.get("scavenging", 3)
+    hp_ratio = explorer["hp"] / max(1, explorer["hp_max"])
+    effective_scav = scav_skill if hp_ratio > 0.5 else max(1, scav_skill - 2)
+
+    loot = {}
+    if random.random() < 0.2 + effective_scav * 0.04:
+        loot["fuel"] = random.randint(1, 2 + effective_scav // 3)
+    if random.random() < 0.3 + effective_scav * 0.04:
+        loot["food"] = random.randint(1, 2 + effective_scav // 3)
+    if random.random() < 0.25 + effective_scav * 0.03:
+        loot["scrap"] = random.randint(1, 2 + effective_scav // 3)
+    if random.random() < 0.10:
+        loot["ammo"] = random.randint(1, 2)
+    if random.random() < 0.05:
+        loot["medicine"] = 1
+
+    queries.update_character(explorer["id"], stamina=max(0, explorer["stamina"] - 15))
+
+    if loot:
+        location_descs = [
+            "an overturned truck", "a ransacked convenience store",
+            "an abandoned house", "a wrecked cruiser",
+            "a looted camping store", "a church basement",
+            "a crashed ambulance", "a burned-out diner",
+        ]
+        narrator_text(
+            f"{explorer['name']} picks through {random.choice(location_descs)} "
+            f"and comes back with what they could carry."
+        )
+        queries.update_resources(**loot)
+        loot_display(loot)
+    else:
+        empty_descs = [
+            "Nothing. Picked clean. Someone was here before you.",
+            "Empty shelves, empty drawers, empty hope. The area's been stripped.",
+            "Cobwebs and dust. Whatever was here is long gone.",
+        ]
+        narrator_text(
+            f"{explorer['name']} comes back empty-handed. {random.choice(empty_descs)}"
+        )
+
+
+def do_upgrade():
+    """Handle the Upgrade action."""
+    upgrades_path = os.path.join(DATA_DIR, "upgrades.json")
+    with open(upgrades_path) as f:
+        upgrade_data = json.load(f)["upgrades"]
+
+    resources = queries.get_resources()
+    installed = queries.get_installed_upgrades()
+
+    available = []
+    for key, data in upgrade_data.items():
+        if key in installed:
+            continue
+        prereq = data.get("prerequisite")
+        if prereq and prereq not in installed:
+            continue
+        available.append((key, data))
+
+    if not available:
+        narrator_text("Nothing to upgrade right now. The bus is maxed out — for now.")
+        press_enter()
+        return
+
+    options = []
+    for key, data in available:
+        cost = data["cost_scrap"]
+        tag = (styled("[CAN AFFORD]", Theme.SUCCESS)
+               if resources["scrap"] >= cost
+               else styled("[Need more scrap]", Theme.DAMAGE))
+        options.append(
+            f"{data['name']} — {cost} Scrap  {tag}\n       {data['description']}"
+        )
+    options.append("Cancel")
+
+    narrator_text("You assess the bus. What could be improved?")
+    idx = get_choice(options, prompt="Available upgrades:")
+
+    if idx == len(available):
+        return
+
+    key, data = available[idx]
+    cost = data["cost_scrap"]
+
+    if resources["scrap"] < cost:
+        narrator_text(f"Not enough Scrap. Need {cost}, have {resources['scrap']}.")
+        press_enter()
+        return
+
+    queries.update_resources(scrap=-cost)
+    queries.install_upgrade(key)
+
+    # Apply stat effects
+    bus = queries.get_bus()
+    effects = data.get("effects", {})
+    bus_updates = {}
+    for eff_key, eff_val in effects.items():
+        if eff_key == "armor_max":
+            bus_updates["armor_max"] = bus["armor_max"] + eff_val
+        elif eff_key == "armor":
+            bus_updates["armor"] = min(
+                bus["armor"] + eff_val,
+                bus_updates.get("armor_max", bus["armor_max"])
+            )
+        elif eff_key == "fuel_efficiency":
+            bus_updates["fuel_efficiency"] = round(bus["fuel_efficiency"] + eff_val, 2)
+        elif eff_key == "storage_capacity":
+            bus_updates["storage_capacity"] = bus["storage_capacity"] + eff_val
+        elif eff_key == "crew_capacity":
+            bus_updates["crew_capacity"] = bus["crew_capacity"] + eff_val
+    if bus_updates:
+        queries.update_bus(**bus_updates)
+
+    narrator_text(f"Upgrade installed: {data['name']}.")
+    narrator_text(data["description"])
+    status_update(f"-{cost} Scrap")
+
+    # Banter about upgrade
+    npcs = queries.get_alive_npcs()
+    mechanic = next((c for c in npcs if c["personality"] == "gruff"), None)
+    if mechanic:
+        dialogue(mechanic["name"], "Not bad. She's a little tougher now. Emphasis on 'little.'")
+
+    press_enter()
+
+
+def do_rest():
+    """Handle the Rest action."""
+    crew = queries.get_alive_crew()
+    resources = queries.get_resources()
+    state = queries.get_game_state()
+
+    food_cost = max(1, len(crew))
+
+    if resources["food"] < food_cost:
+        narrator_text(
+            f"Not enough food for a proper rest. Need {food_cost} Food, "
+            f"have {resources['food']}. You can rest hungry, but it won't heal much."
+        )
+        food_cost = resources["food"]
+
+    if food_cost > 0:
+        queries.update_resources(food=-food_cost)
+
+    recovery = {"morning": 8, "afternoon": 12, "evening": 18, "midnight": 22}
+    heal_amount = recovery.get(state["current_phase"], 12)
+
+    if food_cost == 0:
+        heal_amount = 3
+        narrator_text("You rest on empty stomachs. It barely helps.")
+    else:
+        narrator_text("The crew rests. Food is shared. Wounds are tended.")
+
+    for c in crew:
+        queries.heal_character(c["id"], heal_amount)
+        new_stam = min(c["stamina_max"], c["stamina"] + 25)
+        queries.update_character(c["id"], stamina=new_stam)
+
+    if state["current_phase"] in ("evening", "midnight"):
+        narrator_text(
+            "Resting through the dangerous hours. You hear them outside — "
+            "scratching, moaning. But the bus holds. For now."
+        )
+
+    if food_cost > 0:
+        status_update(f"-{food_cost} Food consumed")
+    status_update(f"+{heal_amount} HP and +25 Stamina restored")
+    press_enter()
+
+
+def do_interact():
+    """Handle the Interact action."""
+    npcs = queries.get_alive_npcs()
+    if not npcs:
+        narrator_text(
+            "There's nobody else on the bus. Just you and the road. And the dead."
+        )
+        press_enter()
+        return
+
+    names = []
+    for c in npcs:
+        trust = c["trust"]
+        if trust <= 20:
+            tag = styled("[HOSTILE]", Theme.DAMAGE)
+        elif trust <= 40:
+            tag = styled("[WARY]", Theme.WARNING)
+        elif trust <= 60:
+            tag = ""
+        elif trust <= 80:
+            tag = styled("[LOYAL]", Theme.INFO)
+        else:
+            tag = styled("[DEVOTED]", Theme.SUCCESS)
+        names.append(f"{c['name']} — Trust: {trust} {tag}")
+    names.append("Cancel")
+
+    idx = get_choice(names, prompt="Who do you want to talk to?")
+    if idx == len(npcs):
+        return
+
+    target = npcs[idx]
+    options = get_interaction_options(target)
+    labels = [o["label"] for o in options]
+    labels.append("Nevermind")
+
+    dial_idx = get_choice(labels, prompt=f"Talking to {target['name']}...")
+    if dial_idx == len(options):
+        return
+
+    option = options[dial_idx]
+
+    # Cost check for gifts
+    if "cost" in option:
+        res = queries.get_resources()
+        for k, v in option["cost"].items():
+            if res.get(k, 0) < v:
+                narrator_text(f"You don't have enough {k} for that.")
+                press_enter()
+                return
+        queries.update_resources(**{k: -v for k, v in option["cost"].items()})
+
+    trust_delta = option.get("trust_delta", 0)
+    if trust_delta > 0 and random.random() < 0.25:
+        response = option.get("response_negative") or option["response_positive"]
+        trust_delta = max(-5, -trust_delta // 2)
+    else:
+        response = option["response_positive"]
+
+    new_trust = queries.change_trust(target["id"], trust_delta)
+
+    narrator_text(response)
+
+    if trust_delta > 0:
+        status_update(f"{target['name']}'s trust: {new_trust} (+{trust_delta})")
+    elif trust_delta < 0:
+        print_styled(
+            f"  ! {target['name']}'s trust: {new_trust} ({trust_delta})", Theme.WARNING
+        )
+    press_enter()
+
+
+def do_travel() -> bool:
+    """Handle travel to the next node. Returns True if travel happened."""
+    from engine.travel import travel_to_node
+
+    state = queries.get_game_state()
+    current_node_id = state.get("current_node_id")
+
+    if not current_node_id:
+        narrator_text("You're not sure where to go.")
+        press_enter()
+        return False
+
+    next_nodes = queries.get_next_nodes(current_node_id)
+    if not next_nodes:
+        narrator_text("The road ends here.")
+        press_enter()
+        return False
+
+    # Filter hidden routes
+    has_fragment = queries.get_flag("has_map_fragment")
+    visible_nodes = [
+        n for n in next_nodes
+        if not n["requires_map_fragment"] or has_fragment
+    ]
+    if not visible_nodes:
+        narrator_text("No accessible routes forward.")
+        press_enter()
+        return False
+
+    bus = queries.get_bus()
+    resources = queries.get_resources()
+    options = []
+    for n in visible_nodes:
+        fuel_cost = max(1, int(n["fuel_cost"] * bus["fuel_efficiency"]))
+        desc = n.get("edge_description", f"Head to {n['name']}")
+        node_type = n["node_type"].replace("_", " ").title()
+        affordable = (
+            "" if resources["fuel"] >= fuel_cost
+            else styled(" [NOT ENOUGH FUEL]", Theme.DAMAGE)
+        )
+        options.append(f"{desc}\n       [{node_type}] — Fuel cost: {fuel_cost}{affordable}")
+    options.append("Stay here")
+
+    idx = get_choice(options, prompt="Where to next?")
+    if idx == len(visible_nodes):
+        return False
+
+    target = visible_nodes[idx]
+    result = travel_to_node(target["id"])
+
+    if not result["success"]:
+        if result["reason"] == "no_fuel_dead_zone":
+            clear_screen()
+            print_blank(3)
+            narrator_text("The engine sputters. Coughs. Dies.")
+            dramatic_pause(2.0)
+            narrator_text(
+                "Silence. Then the groaning starts. From every direction. Getting closer."
+            )
+            dramatic_pause(2.0)
+            print_styled("  There is no escape.", Theme.DAMAGE + Color.BOLD)
+            dramatic_pause(2.0)
+            queries.update_game_state(game_over=1, ending_type="bad")
+        elif result["reason"] == "no_fuel":
+            narrator_text(f"Not enough fuel. Need {result['fuel_cost']}.")
+        press_enter()
+        return result.get("reason") == "no_fuel_dead_zone"
+
+    narrator_text(f"The bus rumbles forward. {result['fuel_cost']} fuel burned.")
+    status_update(f"Arrived at {target['name']}")
+    status_update(f"Fuel remaining: {result['fuel_remaining']}")
+
+    press_enter()
+    return True
+
+
+def handle_recruitment_from_event(effects: dict):
+    """Handle NPC recruitment triggered by events."""
+    if not effects.get("recruit_random"):
+        return
+
+    new_npc = recruit_next_npc()
+    if not new_npc:
+        return
+
+    print()
+    narrator_text(f"A new survivor joins the bus: {new_npc['name']}.")
+
+    chars_path = os.path.join(DATA_DIR, "characters.json")
+    with open(chars_path) as f:
+        templates = json.load(f).get("npc_templates", [])
+    for t in templates:
+        if t["name"] == new_npc["name"]:
+            dialogue(new_npc["name"], t.get("intro_dialogue", "..."))
+            break
+
+    status_update(f"Crew size: {queries.crew_count()}")
