@@ -9,6 +9,7 @@ import random
 from db import queries
 from engine.combat import stat_check_combat, generate_combat_narrative
 from engine.crew import get_interaction_options, recruit_next_npc
+from engine.audio import audio
 from ui.style import Color, Theme, styled, print_styled, clear_screen, print_blank
 from ui.narration import (
     narrator_text, dramatic_pause, status_update,
@@ -79,6 +80,17 @@ def do_explore():
     narrator_text(f"{explorer['name']} heads out into the unknown.")
     dramatic_pause(0.5)
 
+    # ── PHASE PUSH EVENT CHECK (~20% chance) ──
+    from engine.phase_push import (
+        get_push_explore_event, resolve_push_event,
+        display_phase_push, warn_phase_push
+    )
+    push_event = get_push_explore_event()
+    if push_event:
+        _resolve_push_explore(explorer, push_event)
+        press_enter()
+        return
+
     # Combat chance — MUCH higher at night
     combat_chances = {
         "morning": 0.25, "afternoon": 0.40,
@@ -97,6 +109,7 @@ def do_explore():
 
 def _resolve_explore_combat(explorer: dict):
     """Combat encounter during exploration."""
+    audio.play_music("combat")
     narrator_text("Movement. Close. Too close.")
     dramatic_pause(0.5)
 
@@ -137,6 +150,7 @@ def _resolve_explore_combat(explorer: dict):
     elif result.get("got_infected"):
         print()
         dramatic_pause(0.5)
+        audio.play_sfx("bite")
         print_styled(
             f"  !! {explorer['name']} WAS BITTEN !!",
             Theme.DAMAGE + Color.BOLD
@@ -195,6 +209,7 @@ def _resolve_explore_scavenge(explorer: dict):
             f"and comes back with what they could carry."
         )
         queries.update_resources(**loot)
+        audio.play_sfx("loot")
         loot_display(loot)
     else:
         empty_descs = [
@@ -205,6 +220,65 @@ def _resolve_explore_scavenge(explorer: dict):
         narrator_text(
             f"{explorer['name']} comes back empty-handed. {random.choice(empty_descs)}"
         )
+
+
+def _resolve_push_explore(explorer: dict, event: dict):
+    """Handle a phase-push exploration event."""
+    from engine.phase_push import (
+        resolve_push_event, display_phase_push, warn_phase_push
+    )
+    from engine.combat import stat_check_combat, generate_combat_narrative
+
+    narrator_text(event["description"])
+    dramatic_pause(0.5)
+
+    # Build choices with time warnings
+    options = []
+    for c in event["choices"]:
+        label = c["label"]
+        desc_parts = [c.get("description", "")]
+        if c.get("push"):
+            time_warn = warn_phase_push(1)
+            if time_warn:
+                desc_parts.append(time_warn)
+        options.append({"label": label, "description": " ".join(desc_parts)})
+
+    idx = get_choice_with_details(options, prompt="What do you do?")
+
+    result = resolve_push_event(event, idx)
+
+    # Display outcome
+    narrator_text(result["text"])
+
+    # Show loot
+    if result.get("reward"):
+        loot_only = {k: v for k, v in result["reward"].items() if isinstance(v, int) and v > 0}
+        if loot_only:
+            audio.play_sfx("loot")
+            loot_display(loot_only)
+
+    # Show phase push
+    if result["pushed"] and result["push_result"]:
+        display_phase_push(result["push_result"])
+
+    # Handle recruit
+    if result.get("recruited"):
+        npc = result["recruited"]
+        narrator_text(f"A new survivor joins the bus: {npc['name']}.")
+        status_update(f"Crew size: {queries.crew_count()}")
+
+    # Handle triggered combat
+    if result.get("combat_triggered"):
+        narrator_text("The noise brought them. They're coming.")
+        dramatic_pause(0.5)
+        audio.play_music("combat")
+        combat_result = stat_check_combat(explorer["id"])
+        narrative = generate_combat_narrative(combat_result)
+        narrator_text(narrative)
+        if combat_result["damage_taken"] > 0:
+            damage_display(explorer["name"], combat_result["damage_taken"])
+        if combat_result.get("component_result", {}).get("narrative"):
+            narrator_text(combat_result["component_result"]["narrative"])
 
 
 def do_upgrade():
@@ -362,6 +436,7 @@ def _do_install_upgrade():
         queries.update_bus(**bus_updates)
 
     narrator_text(f"Upgrade installed: {data['name']}.")
+    audio.play_sfx("upgrade")
     narrator_text(data["description"])
     status_update(f"-{cost} Scrap")
 
@@ -590,6 +665,7 @@ def do_travel() -> bool:
         press_enter()
         return result.get("reason") == "no_fuel_dead_zone"
 
+    audio.play_music("travel")
     narrator_text(f"The bus rumbles forward. {result['fuel_cost']} fuel burned.")
     status_update(f"Arrived at {target['name']}")
     status_update(f"Fuel remaining: {result['fuel_remaining']}")

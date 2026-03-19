@@ -11,6 +11,7 @@ from ui.narration import (
 )
 from ui.input import get_text_input, get_choice, press_enter
 from db import queries
+from engine.audio import audio
 
 
 PRONOUN_MAP = {
@@ -26,6 +27,7 @@ def run_intro() -> dict:
     Returns dict with player_name, pronouns, starting_skill.
     """
     # ── TITLE SCREEN ──
+    audio.play_music("title")
     title_card("DEAD ROUTE", "A Zombie Survival Roguelite")
     dramatic_pause(1.0)
 
@@ -37,6 +39,7 @@ def run_intro() -> dict:
         return {"quit": True}
 
     # ── TEXT CRAWL ──
+    audio.play_music("intro")
     clear_screen()
     print_blank(2)
 
@@ -178,6 +181,7 @@ def run_intro() -> dict:
     time.sleep(0.5)
     print()
 
+    audio.play_sfx("engine_start")
     reveal_text("The engine catches.", style=Theme.SUCCESS + Color.BOLD)
     dramatic_pause(1.0)
 
@@ -256,6 +260,7 @@ def run_intro() -> dict:
     # ── CREATE GAME STATE ──
     clear_screen()
     print_blank(2)
+    audio.stop_music()
     reveal_text("Your story begins.", style=Theme.TITLE + Color.BOLD)
     dramatic_pause(1.5)
 

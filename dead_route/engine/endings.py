@@ -7,10 +7,12 @@ from db import queries
 from ui.style import Color, Theme, print_styled, clear_screen, print_blank
 from ui.narration import narrator_text, dramatic_pause, scene_break
 from ui.input import press_enter
+from engine.audio import audio
 
 
 def handle_haven_arrival():
     """Handle arriving at Haven — good/neutral ending."""
+    audio.play_music("haven")
     crew = queries.get_alive_crew()
     bus = queries.get_bus()
 
@@ -52,10 +54,12 @@ def handle_meridian_arrival():
 def handle_game_over():
     """Display the game over / ending screen with run statistics."""
     state = queries.get_game_state()
+    ending = state.get("ending_type", "bad")
+    if ending in ("bad", "neutral"):
+        audio.play_music("gameover")
     clear_screen()
     print_blank(3)
 
-    ending = state.get("ending_type", "bad")
     name = state["player_name"]
 
     if ending == "bad":
@@ -115,3 +119,4 @@ def handle_game_over():
 
     print_blank(2)
     press_enter("Press Enter to return to title screen...")
+    audio.stop_music()

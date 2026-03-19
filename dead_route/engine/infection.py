@@ -20,6 +20,7 @@ from ui.narration import (
     narrator_text, dramatic_pause, scene_break, status_update, dialogue
 )
 from ui.input import get_choice, get_choice_with_details, press_enter
+from engine.audio import audio
 
 
 # ── Stage Definitions ──────────────────────────────────────
@@ -474,6 +475,7 @@ def _euthanize(char: dict, state: dict):
     )
     dramatic_pause(2.0)
 
+    audio.play_sfx("gunshot")
     narrator_text(
         f"The sound is loud in the empty bus. Then silence. "
         f"Real silence, for the first time in days."

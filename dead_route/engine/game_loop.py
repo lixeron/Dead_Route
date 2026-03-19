@@ -18,6 +18,7 @@ from engine.infection import (
     tick_infections, handle_turning, present_infection_choice,
     get_infection_hud_warning, STAGES
 )
+from engine.audio import audio, play_phase_music
 from ui.style import Color, Theme, styled, print_styled, clear_screen, print_blank
 from ui.narration import narrator_text, dramatic_pause, scene_break, status_update
 from ui.input import get_choice, press_enter
@@ -65,6 +66,7 @@ def check_random_event():
     if not event:
         return
 
+    audio.play_music("event")
     clear_screen()
     print_blank(1)
     scene_break("EVENT")
@@ -156,6 +158,9 @@ def run():
         # ── Display ──
         clear_screen()
         show_hud()
+
+        # ── Phase music ──
+        play_phase_music(state["current_phase"])
 
         # Show infection warnings on HUD
         infected_crew = queries.get_infected_crew()
