@@ -23,7 +23,7 @@ def _interruptible_sleep(seconds: float):
             except Exception:
                 pass
             return
-        _interruptible_sleep(interval)
+        time.sleep(interval)
         elapsed += interval
 
 
