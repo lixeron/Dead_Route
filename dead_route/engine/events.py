@@ -8,6 +8,7 @@ import random
 from db import queries
 
 EVENTS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "events.json")
+DARK_EVENTS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "dark_events.json")
 
 _event_cache = None
 
@@ -15,9 +16,16 @@ _event_cache = None
 def load_events() -> list[dict]:
     global _event_cache
     if _event_cache is None:
+        _event_cache = []
+        # Load base events
         with open(EVENTS_PATH) as f:
             data = json.load(f)
-        _event_cache = data.get("events", [])
+        _event_cache.extend(data.get("events", []))
+        # Load dark events
+        if os.path.exists(DARK_EVENTS_PATH):
+            with open(DARK_EVENTS_PATH) as f:
+                dark = json.load(f)
+            _event_cache.extend(dark.get("dark_events", []))
     return _event_cache
 
 
@@ -153,8 +161,22 @@ def _apply_effects(effects: dict, state: dict, crew: list[dict]):
             queries.set_flag(val, True)
         elif key == "recruit_random":
             pass  # Handled by the game loop after event resolution
+        elif key == "recruit_random2":
+            pass  # Second recruit, also handled by game loop
         elif key == "advance_phase":
             pass  # Handled by the game loop
+        elif key == "remove_random_crew":
+            # A crew member is taken/lost (meat grinder, etc.)
+            npcs = [c for c in crew if not c["is_player"] and c["is_alive"]]
+            if npcs:
+                victim = random.choice(npcs)
+                queries.update_character(victim["id"], is_alive=0)
+        elif key == "damage_all_crew":
+            for c in crew:
+                queries.damage_character(c["id"], val)
+        elif key == "bus_damage":
+            from engine.bus_damage import apply_bus_damage
+            apply_bus_damage(val)
 
     if resource_changes:
         queries.update_resources(**resource_changes)

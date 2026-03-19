@@ -508,7 +508,9 @@ def do_rest():
 
 
 def do_interact():
-    """Handle the Interact action."""
+    """Handle the Interact action. Uses deep dialogue when available."""
+    from engine.deep_dialogue import get_deep_scene
+
     npcs = queries.get_alive_npcs()
     if not npcs:
         narrator_text(
@@ -538,17 +540,51 @@ def do_interact():
         return
 
     target = npcs[idx]
-    options = get_interaction_options(target)
-    labels = [o["label"] for o in options]
+
+    # Build interaction options
+    base_options = get_interaction_options(target)
+    labels = [o["label"] for o in base_options]
+
+    # Check for deep dialogue scene
+    deep_scene = get_deep_scene(target["name"], target["trust"], "small_talk")
+    deep_backstory = get_deep_scene(target["name"], target["trust"], "backstory")
+    deep_meal = get_deep_scene(target["name"], target["trust"], "share_meal")
+
+    # Add deep dialogue options if available
+    deep_options = []
+    if deep_scene:
+        labels.append(f"Sit with {target['name']} (Deep conversation)")
+        deep_options.append(("small_talk", deep_scene))
+    if deep_backstory:
+        labels.append(f"Ask {target['name']} about their past (Story)")
+        deep_options.append(("backstory", deep_backstory))
+    if deep_meal and queries.get_resources().get("food", 0) >= 1:
+        labels.append(f"Share a meal with {target['name']} (Costs 1 Food)")
+        deep_options.append(("share_meal", deep_meal))
+
     labels.append("Nevermind")
 
     dial_idx = get_choice(labels, prompt=f"Talking to {target['name']}...")
-    if dial_idx == len(options):
+
+    # Cancel
+    if dial_idx == len(labels) - 1:
         return
 
-    option = options[dial_idx]
+    # Deep dialogue option selected
+    base_count = len(base_options)
+    if dial_idx >= base_count:
+        deep_idx = dial_idx - base_count
+        if deep_idx < len(deep_options):
+            trigger_type, scene = deep_options[deep_idx]
+            _play_deep_scene(target, scene)
+            return
 
-    # Cost check for gifts
+    # Fallback to generic interaction
+    if dial_idx >= len(base_options):
+        return
+
+    option = base_options[dial_idx]
+
     if "cost" in option:
         res = queries.get_resources()
         for k, v in option["cost"].items():
@@ -575,6 +611,44 @@ def do_interact():
         print_styled(
             f"  ! {target['name']}'s trust: {new_trust} ({trust_delta})", Theme.WARNING
         )
+    press_enter()
+
+
+def _play_deep_scene(char: dict, scene: dict):
+    """Render a deep dialogue scene with typewriter narration and dialogue."""
+    from ui.narration import dialogue as show_dialogue
+
+    # Pay costs if any
+    cost = scene.get("cost")
+    if cost:
+        queries.update_resources(**{k: -v for k, v in cost.items()})
+        for k, v in cost.items():
+            status_update(f"-{v} {k.capitalize()}")
+
+    # Play scene lines
+    for speaker, text in scene["text"]:
+        if speaker == "narrator":
+            narrator_text(text)
+        else:
+            show_dialogue(speaker, text)
+        dramatic_pause(0.3)
+
+    # Apply trust
+    trust_delta = scene.get("trust_delta", 0)
+    if trust_delta:
+        new_trust = queries.change_trust(char["id"], trust_delta)
+        if trust_delta > 0:
+            status_update(f"{char['name']}'s trust: {new_trust} (+{trust_delta})")
+        else:
+            print_styled(
+                f"  ! {char['name']}'s trust: {new_trust} ({trust_delta})", Theme.WARNING
+            )
+
+    # Set flags
+    flag = scene.get("sets_flag")
+    if flag:
+        queries.set_flag(flag, True)
+
     press_enter()
 
 

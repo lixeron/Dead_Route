@@ -44,17 +44,33 @@ def display_warnings(warnings: list[str]):
 
 
 def maybe_show_banter():
-    """50% chance of showing crew banter between phases."""
+    """50% chance of crew banter, 15% chance of quiet moment."""
+    from engine.deep_dialogue import get_quiet_moment
+
+    state = queries.get_game_state()
+    crew = queries.get_alive_crew()
+
+    # Try quiet moment first (rarer, more meaningful)
+    moment = get_quiet_moment(crew, state)
+    if moment:
+        print()
+        for speaker, text in moment["text"]:
+            if speaker == "narrator":
+                from ui.narration import narrator_text as nt
+                nt(text)
+        return
+
+    # Standard banter
     if random.random() > 0.5:
         return
-    state = queries.get_game_state()
     resources = queries.get_resources()
     context = get_context(state, resources)
     banter = get_ambient_banter(context)
     if banter:
         print()
         print(f"  {Theme.MUTED}{Color.ITALIC}{banter}{Color.RESET}")
-        dramatic_pause(0.4)
+        from ui.narration import _interruptible_sleep
+        _interruptible_sleep(0.4)
 
 
 def check_random_event():

@@ -1,0 +1,203 @@
+{
+  "dark_events": [
+    {
+      "id": "infected_child",
+      "type": "story",
+      "description": "You hear the arguing before you see them. A man and a woman crouched behind an overturned car, clutching a small boy between them. The kid can't be more than six. He's shivering, wrapped in a blanket too big for him.\n\nThen you see it. The edge of a bandage peeking out from under the blanket, dark with something that isn't blood anymore. The blackening has started. The parents know. You can see it in their eyes — that specific terror of people who understand what's coming and can't accept it.",
+      "preconditions": {"min_day": 5, "chance": 0.25},
+      "cooldown": 999,
+      "choices": [
+        {
+          "label": "Tell them the truth. Gently.",
+          "skill_check": null,
+          "success": {
+            "text": "You kneel down to their level. You speak softly. You explain what the blackening means, what's going to happen over the next few days, what it will look like at the end.\n\nThe mother's face crumbles. The father's goes hard.\n\n\"We know,\" he says. \"We've known for two days. We just... we hoped...\"\n\nThe boy tugs at his mother's sleeve. \"Mommy, why is everyone sad?\"\n\nYou offer them your last advice: get distance. When the time comes, don't be in the same room. The father nods. The mother can't speak.\n\nYou walk back to the bus carrying something heavier than any supply crate.",
+            "effects": {"trust_all": 3, "flag": "warned_family"},
+            "outcome": "told_truth"
+          },
+          "failure": null
+        },
+        {
+          "label": "Offer Medicine. You might save him.",
+          "skill_check": null,
+          "success": {
+            "text": "You hand over one dose of medicine. The parents look at it like you've handed them God's own blood.\n\n\"This will slow it down,\" you say. \"It's not a cure. But it buys time. Maybe enough time to find something better.\"\n\nThe mother administers it with shaking hands. The boy doesn't cry — he's past crying. But his eyes focus for a moment, and he whispers \"thank you\" in a voice that shouldn't belong to someone who isn't going to grow up.\n\nYou walk away knowing you just used irreplaceable medicine on a probably hopeless case. But 'probably' isn't 'definitely.' And you can live with probably.",
+            "effects": {"medicine": -1, "trust_all": 5, "set_flag": "saved_child_maybe"},
+            "outcome": "gave_medicine"
+          },
+          "failure": null
+        },
+        {
+          "label": "Take their supplies. They won't need them much longer.",
+          "skill_check": null,
+          "success": {
+            "text": "You look at the family. You look at your crew. You make the calculation.\n\n\"Give me your food. Your water. Anything useful.\"\n\nThe father's face goes from grief to fury in a heartbeat. \"You can't — he's a CHILD.\"\n\n\"He's already dead. Your food won't change that. But it might keep my people alive.\"\n\nThe silence that follows is the loudest sound you've ever heard. The mother pulls the boy closer. The father reaches for a bag — slowly, hands shaking with rage — and throws it at your feet.\n\n\"Monsters,\" the mother whispers. \"You're worse than them.\"\n\nShe might be right.",
+            "effects": {"food": 6, "scrap": 3, "trust_all": -10, "set_flag": "robbed_family"},
+            "outcome": "robbed"
+          },
+          "failure": null
+        },
+        {
+          "label": "Keep driving. Don't look back.",
+          "skill_check": null,
+          "success": {
+            "text": "You put the bus in gear and drive past. The family shrinks in the rearview mirror — a man, a woman, and a doomed child, getting smaller and smaller until they're just specks on a dead highway.\n\nNobody on the bus says anything. But you feel their eyes. You feel the judgment in the silence.",
+            "effects": {"trust_all": -4, "flag": "ignored_family"},
+            "outcome": "drove_past"
+          },
+          "failure": null
+        }
+      ]
+    },
+    {
+      "id": "meat_grinder_outpost",
+      "type": "story",
+      "description": "The outpost looks legitimate. Walls made of shipping containers, guard towers with actual spotlights, a gate painted with the words 'NEW EDEN — SALVATION THROUGH LABOR.' A man in clean clothes meets you at the entrance with a smile that doesn't reach his eyes.\n\n\"Welcome, travelers. We have food, shelter, medicine. All we ask is a fair exchange. One of your people stays to help work our farms. In return, the rest of you pass through safely with full supplies.\"",
+      "preconditions": {"min_day": 8, "min_crew": 3, "chance": 0.20},
+      "cooldown": 999,
+      "choices": [
+        {
+          "label": "Accept the deal. Ask for a volunteer.",
+          "skill_check": null,
+          "success": {
+            "text": "You turn to the crew. The silence is deafening.\n\nThen someone steps forward. One of your own. They straighten their shoulders and look at you with something between courage and resignation.\n\n\"I'll do it. You all keep going.\"\n\nThe man in clean clothes smiles wider. Guards escort your volunteer through a heavy metal door. The supplies are loaded onto the bus. Good supplies — real food, real medicine, ammunition.\n\nAs you drive away, you notice the smell. Underneath the diesel and the dust, there's something else. Something you've learned to recognize. The sweet, cloying stink of a lot of death in a small space.\n\nThe 'farms' are not farms.\n\nYou realize this three miles down the road, when the implications finish assembling themselves in your mind. By then, it's too late to go back. It was always too late.",
+            "effects": {"food": 10, "medicine": 3, "ammo": 8, "remove_random_crew": true, "set_flag": "meat_grinder_sacrifice"},
+            "outcome": "sacrificed_one"
+          },
+          "failure": null
+        },
+        {
+          "label": "Refuse. Drive through without stopping.",
+          "skill_check": null,
+          "success": {
+            "text": "\"No deal.\"\n\nThe man's smile doesn't change. \"That's a shame. The road ahead is long and we're the only civilization for a hundred miles.\"\n\nYou drive away. Nobody speaks for hours. Later, when you're far enough that the spotlights have disappeared behind the horizon, Nadia speaks up quietly.\n\n\"Did anyone else notice the smell? Coming from behind those walls?\"\n\nEveryone noticed. Nobody wanted to say it.",
+            "effects": {"trust_all": 2, "set_flag": "refused_meat_grinder"},
+            "outcome": "refused"
+          },
+          "failure": null
+        },
+        {
+          "label": "Attack the outpost. Free whoever is inside.",
+          "skill_check": {"skill": "combat", "difficulty": 8},
+          "success": {
+            "text": "You give the signal. The bus rams the gate.\n\nWhat you find behind those walls will haunt you for the rest of your life. The 'farms' are processing rooms. Hooks. Drains. Freezers full of things that were people yesterday. The workers aren't workers — they're livestock waiting for their turn.\n\nYou free eleven survivors. Most of them can't walk. Some of them can't speak. One of them just keeps saying 'thank you' over and over, rocking back and forth.\n\nThe man in clean clothes is nowhere to be found.\n\nTwo of the freed survivors are strong enough to join you. The rest scatter into the wasteland. You hope they find something better. But you've seen what 'something better' looks like behind the walls.",
+            "effects": {"fuel": -5, "ammo": -5, "recruit_random": true, "recruit_random2": true, "set_flag": "destroyed_meat_grinder"},
+            "outcome": "attacked"
+          },
+          "failure": {
+            "text": "The attack goes wrong immediately. They have more guns than you expected — a lot more. You barely make it out, the bus riddled with bullet holes, everyone bleeding.\n\nAs you flee, you hear the screams of the people still inside. They heard the fighting. They thought rescue was coming.\n\nYou couldn't save them.",
+            "effects": {"fuel": -3, "ammo": -4, "damage_all_crew": 25, "bus_damage": 20, "set_flag": "failed_meat_grinder"},
+            "outcome": "failed_attack"
+          }
+        },
+        {
+          "label": "Trade supplies instead of people.",
+          "skill_check": null,
+          "success": {
+            "text": "\"We don't trade people. But we have scrap. Tools.\"\n\nThe man considers this. His smile turns calculating.\n\n\"Double the usual rate. Twenty scrap for passage and basic supplies.\"\n\nIt's robbery, but at least it's just robbery.",
+            "effects": {"scrap": -12, "food": 4, "set_flag": "traded_meat_grinder"},
+            "outcome": "traded"
+          },
+          "failure": null
+        }
+      ]
+    },
+    {
+      "id": "radio_signal",
+      "type": "story",
+      "description": "The radio crackles to life. It hasn't made a sound in weeks. Static, then a voice — female, calm, professional.\n\n\"To any survivors receiving this broadcast: this is Captain Reyes, United States Army, operating from Firebase Valkyrie. We are conducting extraction operations at the following coordinates. Medical facilities are available. Repeat, medical facilities are available. This broadcast will repeat every six hours.\"\n\nThe coordinates are fifty miles north. Off your route.",
+      "preconditions": {"min_day": 6, "flag_true": "used_radio", "chance": 0.30},
+      "cooldown": 999,
+      "choices": [
+        {
+          "label": "Detour north. The military might be salvation.",
+          "skill_check": null,
+          "success": {
+            "text": "You turn the bus north. Fifty miles of unknown road.\n\nYou find Firebase Valkyrie. Or what's left of it. The walls are intact but the gate is open. Inside, the tents are standing, the medical equipment is still powered — generators humming — but there are no soldiers. No Captain Reyes. Just a radio on repeat and a logbook that ends mid-sentence.\n\nThe medical supplies are untouched. You take everything you can carry.\n\nOn the way out, you find the soldiers. In a mass grave behind the motor pool. They'd been dead for weeks. Whatever hit them, it wasn't zombies — the bodies are intact. The logbook's last entry mentions 'containment failure in quarantine bay.'\n\nYou drive south very fast and don't stop until the firebase is far behind you.",
+            "effects": {"fuel": -10, "medicine": 5, "ammo": 6, "food": 4, "trust_all": -3, "set_flag": "found_firebase"},
+            "outcome": "detoured"
+          },
+          "failure": null
+        },
+        {
+          "label": "It's a trap. Nobody's still broadcasting.",
+          "skill_check": null,
+          "success": {
+            "text": "\"It's on repeat,\" you say. \"Nobody's home. It's bait.\"\n\nThe bus keeps heading east. The radio crackles its message one more time before fading into static. Someone on the bus whispers, \"What if it was real?\"\n\nYou'll never know.",
+            "effects": {"trust_all": -2},
+            "outcome": "ignored_signal"
+          },
+          "failure": null
+        }
+      ]
+    },
+    {
+      "id": "mercy_on_the_bridge",
+      "type": "story",
+      "description": "The bridge ahead is blocked. Not by zombies — by a single man, standing in the middle of the road with his arms spread wide. Behind him, you can see the bridge is structurally intact. He's blocking it on purpose.\n\nAs you slow down, you see why. He's covered in bites. Dozens of them. His skin is blackening from the neck down. He's standing through what must be unimaginable pain.\n\n\"Don't let me turn,\" he says. His voice is surprisingly clear. \"I can feel it happening. I can feel it in my head. Please. While I can still ask.\"",
+      "preconditions": {"min_day": 3, "chance": 0.20},
+      "cooldown": 999,
+      "choices": [
+        {
+          "label": "Grant his request. One bullet.",
+          "skill_check": null,
+          "success": {
+            "text": "You step out of the bus. He meets your eyes. There's gratitude in them — raw, desperate gratitude.\n\n\"Thank you,\" he says. \"My name is Paul. I was a teacher. I want someone to know that.\"\n\nThe shot echoes across the bridge and into the empty valley below.\n\nPaul was a teacher. Someone knows that now.",
+            "effects": {"ammo": -1, "trust_all": 1, "set_flag": "mercy_paul"},
+            "outcome": "mercy_given"
+          },
+          "failure": null
+        },
+        {
+          "label": "Drive around him.",
+          "skill_check": null,
+          "success": {
+            "text": "You steer around him. He watches the bus pass with hollow eyes. In the rearview mirror, you see him sink to his knees.\n\n\"PLEASE,\" he screams. The word follows you across the bridge and down the road.\n\nYou will hear it again tonight. And the night after that.",
+            "effects": {"trust_all": -3},
+            "outcome": "drove_past"
+          },
+          "failure": null
+        },
+        {
+          "label": "Give him a weapon and let him choose his own end.",
+          "skill_check": null,
+          "success": {
+            "text": "You hand him the machete from the bus. He takes it with shaking hands, looks at it, then looks at the horde gathering at the far end of the bridge.\n\nHe smiles. It's a terrible smile. The smile of a man who just found his purpose.\n\n\"I'll hold the bridge. Go.\"\n\nYou drive past him. In the mirror, you watch Paul — the teacher — walk toward the horde with a machete and nothing left to lose.\n\nThe sounds carry for a long time. They stop eventually.",
+            "effects": {"set_flag": "paul_bridge_stand"},
+            "outcome": "gave_weapon"
+          },
+          "failure": null
+        }
+      ]
+    },
+    {
+      "id": "the_nursery",
+      "type": "story",
+      "description": "The daycare center looked promising from the outside — intact walls, boarded windows, someone had clearly fortified it. Inside, you find why.\n\nCribs. Dozens of them. Each one occupied by something small and still. Baby blankets tucked in carefully. A mobile turning slowly in a draft.\n\nSomeone had gathered every infant they could find and tried to keep them safe here. The formula cans are stacked ceiling-high. The diapers are organized by size. Someone loved these children enough to build them a fortress.\n\nIt wasn't enough.",
+      "preconditions": {"min_day": 4, "chance": 0.15},
+      "cooldown": 999,
+      "choices": [
+        {
+          "label": "Take the supplies. They don't need them.",
+          "skill_check": null,
+          "success": {
+            "text": "You take the formula — it's food, technically. You take the blankets. You take what you can use.\n\nNobody speaks during the process. Everyone works with their eyes down and their jaws tight. When you leave, someone closes the door behind you. Carefully. Respectfully.\n\nOn the bus, Elena is crying. She's trying to hide it but she's crying. Marcus puts a hand on her shoulder — the first time he's voluntarily touched anyone since Memphis.",
+            "effects": {"food": 8, "trust_all": -2},
+            "outcome": "took_supplies"
+          },
+          "failure": null
+        },
+        {
+          "label": "Leave everything. Close the door. Walk away.",
+          "skill_check": null,
+          "success": {
+            "text": "You close the door. You walk away.\n\nSome places deserve to be left alone. Some grief is too heavy to carry on a bus that's already overloaded.\n\nNobody asks what you found inside. Your face told them everything they need to know.",
+            "effects": {"trust_all": 2},
+            "outcome": "left_it"
+          },
+          "failure": null
+        }
+      ]
+    }
+  ]
+}
