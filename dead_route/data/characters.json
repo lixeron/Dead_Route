@@ -1,0 +1,52 @@
+{
+  "npc_templates": [
+    {
+      "name": "Marcus Cole",
+      "personality": "gruff",
+      "combat": 6, "medical": 2, "mechanical": 7, "scavenging": 4,
+      "backstory": "Former auto mechanic from Memphis. Lost his family in the first wave. Copes with dark humor and keeping his hands busy.",
+      "is_romanceable": 1,
+      "intro_dialogue": "The man looks up from under the hood of a wrecked pickup truck. Grease-stained hands, tired eyes, but a crooked grin. \"Well, you've got a bus. I've got a wrench. Seems like the start of a beautiful friendship.\""
+    },
+    {
+      "name": "Elena Vasquez",
+      "personality": "cautious",
+      "combat": 4, "medical": 7, "mechanical": 2, "scavenging": 5,
+      "backstory": "Was a paramedic before the outbreak. Seen too much death to be optimistic, but she still can't walk past someone who needs help.",
+      "is_romanceable": 1,
+      "intro_dialogue": "A woman steps out from behind a pharmacy counter, a red cross armband on her sleeve. She eyes you carefully. \"You bitten? Scratched? I need to know before I get on that bus.\""
+    },
+    {
+      "name": "Dex \"Deadeye\" Park",
+      "personality": "reckless",
+      "combat": 8, "medical": 1, "mechanical": 3, "scavenging": 6,
+      "backstory": "Former competitive shooter turned apocalypse survivor. Treats every encounter like a game. Reckless, but undeniably effective.",
+      "is_romanceable": 1,
+      "intro_dialogue": "You hear a rifle crack from the rooftop of a gas station. Three zombies drop in succession. A guy in a backwards cap slides down a drainpipe, grinning. \"Nice bus. Got room for one more?\""
+    },
+    {
+      "name": "Nadia Okafor",
+      "personality": "intellectual",
+      "combat": 2, "medical": 5, "mechanical": 4, "scavenging": 7,
+      "backstory": "Graduate student in biochemistry before the world ended. Knows more about the LAZARUS pathogen than she lets on. Quiet, observant.",
+      "is_romanceable": 1,
+      "intro_dialogue": "A young woman is crouched in a library, surrounded by textbooks and canned food in equal measure. She looks up, adjusting her glasses. \"Are you heading east? I need to get east.\""
+    },
+    {
+      "name": "Tommy Reeves",
+      "personality": "optimist",
+      "combat": 5, "medical": 3, "mechanical": 5, "scavenging": 5,
+      "backstory": "High school gym teacher who became the reluctant protector of a group of students until they were overrun. Channels guilt into aggressive positivity.",
+      "is_romanceable": 0,
+      "intro_dialogue": "A broad-shouldered man jogs toward the bus, waving both arms. He's out of breath but smiling. \"Oh thank God. I've been walking for three days. Please tell me you're the good guys.\""
+    },
+    {
+      "name": "Rhea Chen",
+      "personality": "stoic",
+      "combat": 7, "medical": 3, "mechanical": 2, "scavenging": 4,
+      "backstory": "National Guard reservist who watched her entire unit get overrun. Follows orders, keeps watch, says very little.",
+      "is_romanceable": 1,
+      "intro_dialogue": "She's standing at a crossroads, rifle slung across her back, dog tags catching the light. She looks at the bus, then at you. A single nod. \"I'll pull my weight.\""
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "upgrades": {
+    "welded_plates": {
+      "name": "Welded Armor Plates",
+      "description": "Scrap metal welded to the bus exterior. Not pretty, but it stops teeth.",
+      "cost_scrap": 8,
+      "effects": {"armor_max": 30, "armor": 30},
+      "prerequisite": null
+    },
+    "cow_catcher": {
+      "name": "Cow Catcher",
+      "description": "A brutal wedge of steel bolted to the front. Plows through anything on the road.",
+      "cost_scrap": 12,
+      "effects": {"ram_damage": 15},
+      "prerequisite": "welded_plates"
+    },
+    "reinforced_windows": {
+      "name": "Reinforced Windows",
+      "description": "Chain-link mesh and plexiglass over every window. Keeps the grabby hands out.",
+      "cost_scrap": 6,
+      "effects": {"armor_max": 15, "armor": 15},
+      "prerequisite": null
+    },
+    "fuel_efficiency_kit": {
+      "name": "Fuel Efficiency Kit",
+      "description": "Marcus says he can tune the engine to burn cleaner. Worth a shot.",
+      "cost_scrap": 10,
+      "effects": {"fuel_efficiency": -0.15},
+      "prerequisite": null
+    },
+    "roof_rack": {
+      "name": "Roof Storage Rack",
+      "description": "Extra cargo space bolted to the roof. Holds supplies, not people.",
+      "cost_scrap": 7,
+      "effects": {"storage_capacity": 20},
+      "prerequisite": null
+    },
+    "trailer_hitch": {
+      "name": "Trailer Hitch + Small Trailer",
+      "description": "A small cargo trailer hitched to the back. More room for everything.",
+      "cost_scrap": 15,
+      "effects": {"storage_capacity": 30, "crew_capacity": 2, "fuel_efficiency": 0.1},
+      "prerequisite": "roof_rack"
+    },
+    "roof_turret": {
+      "name": "Roof-Mounted Turret",
+      "description": "A jury-rigged gun mount on the roof. Someone has to man it, but it's devastating.",
+      "cost_scrap": 20,
+      "effects": {"turret_damage": 20},
+      "prerequisite": "welded_plates"
+    },
+    "radio_antenna": {
+      "name": "Long-Range Radio Antenna",
+      "description": "Picks up military and survivor frequencies. Knowledge is power.",
+      "cost_scrap": 8,
+      "effects": {"radio": true},
+      "prerequisite": null
+    },
+    "reinforced_frame": {
+      "name": "Reinforced Frame",
+      "description": "Full structural reinforcement. The bus can take a serious beating now.",
+      "cost_scrap": 18,
+      "effects": {"armor_max": 50, "armor": 50},
+      "prerequisite": "welded_plates"
+    }
+  }
+}

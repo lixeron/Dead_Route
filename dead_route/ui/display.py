@@ -1,0 +1,154 @@
+"""
+HUD and status display functions.
+Shows resource bars, crew status, bus condition, phase info.
+"""
+
+from ui.style import (
+    Color, Theme, styled, print_styled, print_blank,
+    progress_bar, simple_table, panel, divider, get_terminal_width
+)
+from db import queries
+
+
+PHASE_DISPLAY = {
+    "morning":   ("MORNING",   Theme.MORNING,   "Low",     Theme.RISK_LOW),
+    "afternoon": ("AFTERNOON", Theme.AFTERNOON,  "Medium",  Theme.RISK_MEDIUM),
+    "evening":   ("EVENING",   Theme.EVENING,    "High",    Theme.RISK_HIGH),
+    "midnight":  ("MIDNIGHT",  Theme.MIDNIGHT,   "Extreme", Theme.RISK_EXTREME),
+}
+
+
+def show_hud():
+    """Display the main HUD with resources, bus status, and phase info."""
+    state = queries.get_game_state()
+    resources = queries.get_resources()
+    bus = queries.get_bus()
+    crew = queries.get_alive_crew()
+    node = queries.get_current_node()
+
+    phase_name, phase_color, risk_label, risk_color = PHASE_DISPLAY.get(
+        state["current_phase"], ("UNKNOWN", Color.WHITE, "?", Color.WHITE)
+    )
+
+    width = min(get_terminal_width() - 2, 76)
+
+    # Top bar: Day and Phase
+    print()
+    print_styled("=" * width, Color.GRAY)
+
+    day_str = f"Day {state['current_day']}"
+    phase_str = styled(phase_name, phase_color, Color.BOLD)
+    risk_str = styled(f"Risk: {risk_label}", risk_color)
+    threat_str = styled(f"Threat Lv.{state['threat_level']}", Theme.WARNING)
+
+    location = "Unknown"
+    if node:
+        location = node["name"]
+
+    print(f"  {styled(day_str, Color.BRIGHT_WHITE, Color.BOLD)}  |  {phase_str}  |  "
+          f"{risk_str}  |  {threat_str}")
+    print(f"  {styled('Location:', Color.GRAY)} {styled(location, Color.BRIGHT_WHITE)}")
+
+    print_styled("-" * width, Color.GRAY)
+
+    # Resources row
+    fuel_color = Theme.FUEL if resources["fuel"] > 10 else Theme.DAMAGE
+    food_color = Theme.FOOD if resources["food"] > 5 else Theme.DAMAGE
+    ammo_color = Theme.AMMO if resources["ammo"] > 3 else Theme.DAMAGE
+
+    res_line = (
+        f"  {styled('Fuel:', fuel_color)} {resources['fuel']:>3}  "
+        f"{styled('Food:', food_color)} {resources['food']:>3}  "
+        f"{styled('Scrap:', Theme.SCRAP)} {resources['scrap']:>3}  "
+        f"{styled('Ammo:', ammo_color)} {resources['ammo']:>3}  "
+        f"{styled('Meds:', Theme.MEDICINE)} {resources['medicine']:>3}"
+    )
+    print(res_line)
+
+    # Bus status
+    armor_color = Theme.SUCCESS if bus["armor"] > bus["armor_max"] * 0.5 else (
+        Theme.WARNING if bus["armor"] > bus["armor_max"] * 0.25 else Theme.DAMAGE
+    )
+    bus_line = (
+        f"  {styled('Bus Armor:', armor_color)} {bus['armor']}/{bus['armor_max']}  "
+        f"{styled('Fuel Eff:', Color.GRAY)} {bus['fuel_efficiency']:.2f}x  "
+        f"{styled('Crew:', Color.GRAY)} {len(crew)}/{bus['crew_capacity']}"
+    )
+    print(bus_line)
+
+    print_styled("=" * width, Color.GRAY)
+    print()
+
+
+def show_crew_status():
+    """Display detailed crew status."""
+    crew = queries.get_alive_crew()
+    state = queries.get_game_state()
+
+    print()
+    print_styled("  -- CREW STATUS --", Color.BOLD + Color.BRIGHT_WHITE)
+    print()
+
+    for c in crew:
+        if c["is_player"]:
+            name_display = styled(f"{c['name']} (You)", Theme.PLAYER_NAME, Color.BOLD)
+        else:
+            name_display = styled(c["name"], Theme.NPC_NAME, Color.BOLD)
+
+        # Trust display for NPCs
+        trust_str = ""
+        if not c["is_player"]:
+            trust = c["trust"]
+            if trust <= 20:
+                trust_color = Theme.TRUST_LOW
+                trust_label = "Hostile"
+            elif trust <= 40:
+                trust_color = Theme.TRUST_LOW
+                trust_label = "Wary"
+            elif trust <= 60:
+                trust_color = Theme.MUTED
+                trust_label = "Neutral"
+            elif trust <= 80:
+                trust_color = Theme.TRUST_HIGH
+                trust_label = "Loyal"
+            else:
+                trust_color = Theme.TRUST_HIGH
+                trust_label = "Devoted"
+            trust_str = f"  {styled(f'Trust: {trust_label} ({trust})', trust_color)}"
+
+        hp_color = Theme.SUCCESS if c["hp"] > 60 else (Theme.WARNING if c["hp"] > 30 else Theme.DAMAGE)
+        hp_bar = progress_bar(c["hp"], c["hp_max"], width=15, fill_color=hp_color, label="HP")
+
+        print(f"  {name_display}{trust_str}")
+        print(f"    {hp_bar}")
+        print(f"    {styled('Combat:', Color.GRAY)}{c['combat']:>2}  "
+              f"{styled('Medical:', Color.GRAY)}{c['medical']:>2}  "
+              f"{styled('Mech:', Color.GRAY)}{c['mechanical']:>2}  "
+              f"{styled('Scav:', Color.GRAY)}{c['scavenging']:>2}")
+        print()
+
+
+def show_location_description():
+    """Display current location description."""
+    node = queries.get_current_node()
+    if not node:
+        return
+
+    node_colors = {
+        "town": Color.YELLOW,
+        "highway": Color.GRAY,
+        "rural": Color.GREEN,
+        "urban": Color.RED,
+        "outpost": Color.CYAN,
+        "dead_zone": Color.BRIGHT_RED,
+    }
+
+    color = node_colors.get(node["node_type"], Color.WHITE)
+    type_display = node["node_type"].replace("_", " ").title()
+
+    print(panel(
+        node["description"],
+        title=f"{node['name']} [{type_display}]",
+        border_color=color,
+        title_color=Color.BOLD + color,
+    ))

@@ -1,0 +1,205 @@
+{
+  "events": [
+    {
+      "id": "roadside_stranger",
+      "type": "random",
+      "description": "A figure stumbles onto the road ahead, waving frantically. They look injured. Behind them, you can see movement in the treeline.",
+      "preconditions": {"min_day": 1, "max_crew_pct": 0.8, "not_node_type": "dead_zone"},
+      "cooldown": 5,
+      "choices": [
+        {
+          "label": "Stop and help them",
+          "skill_check": {"skill": "medical", "difficulty": 5},
+          "success": {
+            "text": "You pull over and {player_name} checks them out. They're hurt but alive — not bitten. Just scared. They climb aboard, grateful.",
+            "effects": {"recruit_random": true},
+            "outcome": "recruited"
+          },
+          "failure": {
+            "text": "It's a trap. Armed scavengers rush from the treeline. You fight them off, but not without cost.",
+            "effects": {"damage_random_crew": 20, "ammo": -2},
+            "outcome": "ambushed"
+          }
+        },
+        {
+          "label": "Slow down and assess from a distance",
+          "skill_check": null,
+          "success": {
+            "text": "You idle the bus and watch. After a tense minute, you see it — they're genuinely hurt, dragging a mangled leg. No ambush. You decide to help on your own terms.",
+            "effects": {"recruit_random": true, "advance_phase": true},
+            "outcome": "cautious_help"
+          },
+          "failure": null
+        },
+        {
+          "label": "Keep driving",
+          "skill_check": null,
+          "success": {
+            "text": "You gun the engine and blow past. In the rearview mirror, the figure collapses. Nobody on the bus says anything for a while.",
+            "effects": {"trust_all": -3, "flag": "abandoned_stranger_count"},
+            "outcome": "ignored"
+          },
+          "failure": null
+        }
+      ]
+    },
+    {
+      "id": "abandoned_gas_station",
+      "type": "random",
+      "description": "An old gas station sits just off the road, windows smashed, pumps rusted. But the underground tanks might still have fuel.",
+      "preconditions": {"min_day": 1},
+      "cooldown": 4,
+      "choices": [
+        {
+          "label": "Send someone to check the pumps",
+          "skill_check": {"skill": "scavenging", "difficulty": 4},
+          "success": {
+            "text": "Jackpot. The underground tank still has fuel. You siphon what you can into every container you've got.",
+            "effects": {"fuel": 12},
+            "outcome": "fuel_found"
+          },
+          "failure": {
+            "text": "The tanks are dry, and the noise attracts a small group of zombies. You deal with them, but burn ammo doing it.",
+            "effects": {"ammo": -2, "damage_random_crew": 10},
+            "outcome": "dry_and_ambushed"
+          }
+        },
+        {
+          "label": "Search the store instead",
+          "skill_check": {"skill": "scavenging", "difficulty": 3},
+          "success": {
+            "text": "The shelves are mostly bare, but you find canned food tucked behind the counter and a few useful odds and ends.",
+            "effects": {"food": 6, "scrap": 3},
+            "outcome": "store_loot"
+          },
+          "failure": {
+            "text": "Nothing but empty shelves and rat droppings. Waste of time.",
+            "effects": {},
+            "outcome": "nothing"
+          }
+        },
+        {
+          "label": "Too risky — drive on",
+          "skill_check": null,
+          "success": {
+            "text": "You pass it by. Safer that way. Probably.",
+            "effects": {},
+            "outcome": "skipped"
+          },
+          "failure": null
+        }
+      ]
+    },
+    {
+      "id": "dying_scientist",
+      "type": "story",
+      "description": "You find a woman in a lab coat slumped against a wrecked SUV. She's been bitten — you can see the wound on her forearm, already blackening. But she's clutching a sealed plastic case to her chest with white-knuckled hands.",
+      "preconditions": {"min_day": 8, "flag_false": "has_map_fragment", "chance": 0.35},
+      "cooldown": 999,
+      "choices": [
+        {
+          "label": "Use Medicine to ease her pain and listen",
+          "skill_check": null,
+          "success": {
+            "text": "You kneel beside her and administer a painkiller. Her breathing steadies. She looks at you with fading clarity.\n\n\"Meridian,\" she whispers. \"The facility where it started. The cure is there. I was so close...\"\n\nShe presses the case into your hands. Inside: a laminated map with coordinates, security codes scrawled in the margins, and a keycard.\n\n\"Find it. End this.\"\n\nShe closes her eyes. She doesn't open them again.",
+            "effects": {"medicine": -1, "set_flag": "has_map_fragment", "set_flag2": "saved_scientist"},
+            "outcome": "map_obtained"
+          },
+          "failure": null
+        },
+        {
+          "label": "Take the case and leave",
+          "skill_check": null,
+          "success": {
+            "text": "You reach for the case but it's locked — some kind of biometric seal. Without her fingerprint, it's just a fancy paperweight. You toss it aside.",
+            "effects": {"scrap": 1},
+            "outcome": "case_useless"
+          },
+          "failure": null
+        },
+        {
+          "label": "Put her out of her misery",
+          "skill_check": null,
+          "success": {
+            "text": "You do what needs to be done. Quick. Clean. She doesn't suffer.\n\nThe sealed case sits there. Locked. Whatever she was carrying dies with her.\n\nSome of your crew watch in silence. You can feel their eyes on you.",
+            "effects": {"set_flag": "mercy_kill", "trust_all": -5, "ammo": -1},
+            "outcome": "mercy_killed"
+          },
+          "failure": null
+        }
+      ]
+    },
+    {
+      "id": "supply_cache",
+      "type": "random",
+      "description": "Behind a collapsed wall, you spot a military crate, partially buried under rubble. The lock is broken.",
+      "preconditions": {"min_day": 2},
+      "cooldown": 6,
+      "choices": [
+        {
+          "label": "Open it",
+          "skill_check": null,
+          "success": {
+            "text": "Inside: ammo, medical supplies, and MREs. Someone stashed this and never came back for it. Their loss.",
+            "effects": {"ammo": 5, "medicine": 2, "food": 4},
+            "outcome": "jackpot"
+          },
+          "failure": null
+        },
+        {
+          "label": "Check for traps first",
+          "skill_check": {"skill": "mechanical", "difficulty": 4},
+          "success": {
+            "text": "Good instinct — there's a tripwire connected to a fragmentation grenade. You disarm it carefully, then claim the supplies plus the grenade components.",
+            "effects": {"ammo": 5, "medicine": 2, "food": 4, "scrap": 5},
+            "outcome": "disarmed_and_looted"
+          },
+          "failure": {
+            "text": "BANG. A flashbang, not a frag — lucky. Your ears ring and your vision swims, but you're alive. The crate's contents are intact.",
+            "effects": {"ammo": 5, "medicine": 2, "food": 4, "damage_random_crew": 15},
+            "outcome": "trap_sprung"
+          }
+        }
+      ]
+    },
+    {
+      "id": "crew_argument",
+      "type": "crew",
+      "description": "Voices rise from the back of the bus. Two of your people are going at it.",
+      "preconditions": {"min_crew": 3, "min_day": 3},
+      "cooldown": 4,
+      "choices": [
+        {
+          "label": "Step in and mediate",
+          "skill_check": null,
+          "success": {
+            "text": "You sit them both down and hash it out. It's tense, but they shake hands. Grudgingly.",
+            "effects": {"trust_random_crew": 5},
+            "outcome": "mediated"
+          },
+          "failure": null
+        },
+        {
+          "label": "Take one side",
+          "skill_check": null,
+          "success": {
+            "text": "You back one of them up. The other goes quiet, jaw clenched. Resolved for now, but resentment lingers.",
+            "effects": {"trust_random_crew_positive": 8, "trust_random_crew_negative": -10},
+            "outcome": "took_sides"
+          },
+          "failure": null
+        },
+        {
+          "label": "Tell them both to shut up",
+          "skill_check": null,
+          "success": {
+            "text": "\"Enough!\" The bus goes silent. Neither of them is happy, but neither is anyone else who had to listen to it.",
+            "effects": {"trust_all": -2},
+            "outcome": "silenced"
+          },
+          "failure": null
+        }
+      ]
+    }
+  ]
+}
