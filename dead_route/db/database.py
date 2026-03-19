@@ -41,21 +41,22 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS resources (
             id       INTEGER PRIMARY KEY DEFAULT 1,
-            fuel     INTEGER NOT NULL DEFAULT 30,
-            food     INTEGER NOT NULL DEFAULT 10,
-            scrap    INTEGER NOT NULL DEFAULT 5,
-            ammo     INTEGER NOT NULL DEFAULT 8,
-            medicine INTEGER NOT NULL DEFAULT 2,
+            fuel     INTEGER NOT NULL DEFAULT 15,
+            food     INTEGER NOT NULL DEFAULT 5,
+            scrap    INTEGER NOT NULL DEFAULT 3,
+            ammo     INTEGER NOT NULL DEFAULT 4,
+            medicine INTEGER NOT NULL DEFAULT 1,
             CHECK (id = 1)
         );
 
         CREATE TABLE IF NOT EXISTS bus (
             id                INTEGER PRIMARY KEY DEFAULT 1,
-            armor             INTEGER NOT NULL DEFAULT 50,
+            armor             INTEGER NOT NULL DEFAULT 35,
             armor_max         INTEGER NOT NULL DEFAULT 50,
-            fuel_efficiency   REAL NOT NULL DEFAULT 1.0,
+            fuel_efficiency   REAL NOT NULL DEFAULT 1.2,
             storage_capacity  INTEGER NOT NULL DEFAULT 50,
             crew_capacity     INTEGER NOT NULL DEFAULT 4,
+            fuel_leak         INTEGER NOT NULL DEFAULT 1,
             CHECK (id = 1)
         );
 
@@ -76,7 +77,9 @@ def init_db():
             backstory       TEXT NOT NULL DEFAULT '',
             is_alive        INTEGER NOT NULL DEFAULT 1,
             is_romanceable  INTEGER NOT NULL DEFAULT 0,
-            recruited_day   INTEGER NOT NULL DEFAULT 1
+            recruited_day   INTEGER NOT NULL DEFAULT 1,
+            injury          TEXT NOT NULL DEFAULT 'none',
+            morale          INTEGER NOT NULL DEFAULT 60
         );
 
         CREATE TABLE IF NOT EXISTS bus_upgrades (

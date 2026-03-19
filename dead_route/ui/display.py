@@ -81,7 +81,7 @@ def show_hud():
 
 
 def show_crew_status():
-    """Display detailed crew status."""
+    """Display detailed crew status with injuries, morale, and effective skills."""
     crew = queries.get_alive_crew()
     state = queries.get_game_state()
 
@@ -94,6 +94,15 @@ def show_crew_status():
             name_display = styled(f"{c['name']} (You)", Theme.PLAYER_NAME, Color.BOLD)
         else:
             name_display = styled(c["name"], Theme.NPC_NAME, Color.BOLD)
+
+        # Injury display
+        injury = c.get("injury", "none")
+        injury_str = ""
+        if injury != "none":
+            injury_data = queries.INJURY_TYPES.get(injury, {})
+            injury_label = injury_data.get("label", injury)
+            injury_color = Theme.DAMAGE if injury in ("critical", "infected", "badly_hurt") else Theme.WARNING
+            injury_str = f"  {styled(f'[{injury_label}]', injury_color)}"
 
         # Trust display for NPCs
         trust_str = ""
@@ -116,15 +125,40 @@ def show_crew_status():
                 trust_label = "Devoted"
             trust_str = f"  {styled(f'Trust: {trust_label} ({trust})', trust_color)}"
 
+        # Morale display
+        morale = c.get("morale", 60)
+        if morale < 20:
+            morale_str = styled(f"  Morale: Breaking ({morale})", Theme.DAMAGE)
+        elif morale < 40:
+            morale_str = styled(f"  Morale: Low ({morale})", Theme.WARNING)
+        elif morale < 60:
+            morale_str = styled(f"  Morale: Shaky ({morale})", Theme.MUTED)
+        elif morale < 80:
+            morale_str = styled(f"  Morale: Steady ({morale})", Color.GRAY)
+        else:
+            morale_str = styled(f"  Morale: Strong ({morale})", Theme.SUCCESS)
+
         hp_color = Theme.SUCCESS if c["hp"] > 60 else (Theme.WARNING if c["hp"] > 30 else Theme.DAMAGE)
         hp_bar = progress_bar(c["hp"], c["hp_max"], width=15, fill_color=hp_color, label="HP")
 
-        print(f"  {name_display}{trust_str}")
-        print(f"    {hp_bar}")
-        print(f"    {styled('Combat:', Color.GRAY)}{c['combat']:>2}  "
-              f"{styled('Medical:', Color.GRAY)}{c['medical']:>2}  "
-              f"{styled('Mech:', Color.GRAY)}{c['mechanical']:>2}  "
-              f"{styled('Scav:', Color.GRAY)}{c['scavenging']:>2}")
+        # Effective skills (after penalties)
+        eff_combat = queries.get_effective_skill(c, "combat")
+        eff_medical = queries.get_effective_skill(c, "medical")
+        eff_mech = queries.get_effective_skill(c, "mechanical")
+        eff_scav = queries.get_effective_skill(c, "scavenging")
+
+        # Show penalty in red if skill is reduced
+        def skill_display(name, base, effective):
+            if effective < base:
+                return f"{styled(name, Color.GRAY)}{styled(str(effective), Theme.DAMAGE):>4}"
+            return f"{styled(name, Color.GRAY)}{effective:>2}"
+
+        print(f"  {name_display}{injury_str}{trust_str}")
+        print(f"    {hp_bar}{morale_str}")
+        print(f"    {skill_display('Combat:', c['combat'], eff_combat)}  "
+              f"{skill_display('Medical:', c['medical'], eff_medical)}  "
+              f"{skill_display('Mech:', c['mechanical'], eff_mech)}  "
+              f"{skill_display('Scav:', c['scavenging'], eff_scav)}")
         print()
 
 

@@ -386,3 +386,141 @@ def get_installed_upgrades() -> list[str]:
     rows = conn.execute("SELECT upgrade_key FROM bus_upgrades ORDER BY installed_day").fetchall()
     conn.close()
     return [r["upgrade_key"] for r in rows]
+
+
+# ── Injuries & Morale ─────────────────────────────────────
+
+INJURY_TYPES = {
+    "none":       {"label": "Healthy",       "skill_penalty": 0,  "hp_drain": 0},
+    "scratched":  {"label": "Scratched",     "skill_penalty": 0,  "hp_drain": 0},
+    "wounded":    {"label": "Wounded",        "skill_penalty": 1,  "hp_drain": 3},
+    "badly_hurt": {"label": "Badly Hurt",    "skill_penalty": 2,  "hp_drain": 5},
+    "critical":   {"label": "Critical",      "skill_penalty": 3,  "hp_drain": 8},
+    "infected":   {"label": "INFECTED",      "skill_penalty": 2,  "hp_drain": 12},
+}
+
+
+def set_injury(char_id: int, injury: str):
+    update_character(char_id, injury=injury)
+
+
+def get_effective_skill(char: dict, skill_name: str) -> int:
+    """Get skill value after injury and morale penalties."""
+    base = char.get(skill_name, 1)
+    injury_data = INJURY_TYPES.get(char.get("injury", "none"), INJURY_TYPES["none"])
+    penalty = injury_data["skill_penalty"]
+
+    # Morale penalty
+    morale = char.get("morale", 60)
+    if morale < 20:
+        penalty += 2
+    elif morale < 40:
+        penalty += 1
+
+    # Trust penalty for NPCs
+    if not char.get("is_player"):
+        trust = char.get("trust", 50)
+        if trust <= 20:
+            penalty += 2
+        elif trust <= 40:
+            penalty += 1
+
+    return max(1, base - penalty)
+
+
+def apply_injury_hp_drain():
+    """Apply HP drain to all injured characters. Called once per phase."""
+    crew = get_alive_crew()
+    died = []
+    for c in crew:
+        injury = c.get("injury", "none")
+        drain = INJURY_TYPES.get(injury, {}).get("hp_drain", 0)
+        if drain > 0:
+            new_hp = damage_character(c["id"], drain)
+            if new_hp <= 0:
+                died.append(c["name"])
+    return died
+
+
+def apply_starvation():
+    """
+    Apply hunger effects. Called once per phase.
+    Returns dict with what happened.
+    """
+    resources = get_resources()
+    crew = get_alive_crew()
+    crew_count_val = len(crew)
+
+    result = {
+        "food_consumed": 0,
+        "starving": False,
+        "morale_hit": False,
+        "hp_lost": 0,
+    }
+
+    # Food drain: 1 food per 2 crew members per phase (rounded up)
+    food_needed = max(1, (crew_count_val + 1) // 2)
+
+    if resources["food"] >= food_needed:
+        update_resources(food=-food_needed)
+        result["food_consumed"] = food_needed
+    elif resources["food"] > 0:
+        # Partial food — eat what we have but still hurting
+        update_resources(food=-resources["food"])
+        result["food_consumed"] = resources["food"]
+        result["starving"] = True
+        result["morale_hit"] = True
+        # Starvation damage
+        for c in crew:
+            damage_character(c["id"], 3)
+            change_morale(c["id"], -5)
+        result["hp_lost"] = 3
+    else:
+        # No food at all
+        result["starving"] = True
+        result["morale_hit"] = True
+        for c in crew:
+            damage_character(c["id"], 8)
+            change_morale(c["id"], -10)
+        result["hp_lost"] = 8
+
+    return result
+
+
+def apply_fuel_leak() -> int:
+    """Apply passive fuel leak. Returns fuel lost."""
+    bus = get_bus()
+    leak = bus.get("fuel_leak", 0)
+    if leak <= 0:
+        return 0
+
+    resources = get_resources()
+    # Leak happens once per day (only on morning phase)
+    state = get_game_state()
+    if state["current_phase"] != "morning":
+        return 0
+
+    actual_loss = min(leak, resources["fuel"])
+    if actual_loss > 0:
+        update_resources(fuel=-actual_loss)
+    return actual_loss
+
+
+def change_morale(char_id: int, delta: int) -> int:
+    char = get_character(char_id)
+    if not char:
+        return 0
+    new_morale = max(0, min(100, char.get("morale", 60) + delta))
+    update_character(char_id, morale=new_morale)
+    return new_morale
+
+
+def apply_morale_decay():
+    """Passive morale decay each phase. Worse at higher threat levels."""
+    state = get_game_state()
+    threat = state.get("threat_level", 1)
+    decay = 1 + (threat - 1)  # 1 at threat 1, 2 at threat 2, etc.
+
+    crew = get_alive_npcs()
+    for c in crew:
+        change_morale(c["id"], -decay)
