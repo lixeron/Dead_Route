@@ -1,0 +1,17 @@
+# Python environment and cache
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# SQLite Database (Crucial so you don't commit your actual game state/saves)
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# OS generated junk files
+.DS_Store
+Thumbs.db
