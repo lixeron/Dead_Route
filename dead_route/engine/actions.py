@@ -26,15 +26,40 @@ def do_explore():
 
     # Pick who goes
     if len(crew) > 1:
+        from engine.trauma import character_refuses_midnight, get_character_scars
         names = []
         for c in crew:
             hp_pct = int(c["hp"] / c["hp_max"] * 100)
             warn = " [WOUNDED]" if hp_pct < 40 else ""
+            # Show PTSD warning at midnight
+            if state["current_phase"] == "midnight" and character_refuses_midnight(c["id"]):
+                warn += styled(" [PTSD — REFUSES]", Theme.DAMAGE)
+            # Show scar count
+            scars = get_character_scars(c["id"])
+            if scars:
+                warn += styled(f" [{len(scars)} scar{'s' if len(scars)>1 else ''}]", Theme.WARNING)
             names.append(
                 f"{c['name']} (Cmbt:{c['combat']} Scav:{c['scavenging']} HP:{hp_pct}%{warn})"
             )
         idx = get_choice(names, prompt="Who leads the expedition?")
         explorer = crew[idx]
+
+        # PTSD midnight refusal
+        if state["current_phase"] == "midnight" and character_refuses_midnight(explorer["id"]):
+            narrator_text(
+                f"{explorer['name']} tries to stand up. {explorer['name']}'s hands "
+                f"are shaking. The breathing goes shallow, rapid, ragged. "
+                f"Eyes locked on something nobody else can see."
+            )
+            narrator_text(
+                f"\"I can't.\" The words come out broken. \"I can't go out there. "
+                f"Not in the dark. I'm sorry. I can't.\""
+            )
+            narrator_text(
+                f"{explorer['name']} sits back down. There's no point pushing it."
+            )
+            press_enter()
+            return
     else:
         explorer = crew[0]
 
@@ -109,6 +134,33 @@ def _resolve_explore_combat(explorer: dict):
         dramatic_pause(2.0)
         for c in queries.get_alive_npcs():
             queries.change_trust(c["id"], random.randint(-8, -3))
+    elif result.get("got_infected"):
+        print()
+        dramatic_pause(0.5)
+        print_styled(
+            f"  !! {explorer['name']} WAS BITTEN !!",
+            Theme.DAMAGE + Color.BOLD
+        )
+        narrator_text(
+            f"In the struggle, one of them sank its teeth into "
+            f"{explorer['name']}'s forearm. The wound is deep — ragged "
+            f"and already turning an angry purple at the edges. Blood "
+            f"wells up thick and dark."
+        )
+        narrator_text(
+            f"{explorer['name']} stares at the bite. Everyone stares "
+            f"at the bite. Nobody says what they're all thinking."
+        )
+        dramatic_pause(1.5)
+
+    # ── SCAR CHECK: permanent trauma from brutal combat ──
+    if not result["character_died"] and result["result"] in ("pyrrhic", "defeat"):
+        from engine.trauma import roll_for_scar, present_scar
+        updated_explorer = queries.get_character(explorer["id"])
+        if updated_explorer and updated_explorer["is_alive"]:
+            scar = roll_for_scar(explorer["id"], result["result"])
+            if scar:
+                present_scar(updated_explorer, scar)
 
 
 def _resolve_explore_scavenge(explorer: dict):

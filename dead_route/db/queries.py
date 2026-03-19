@@ -707,3 +707,50 @@ def get_window_morale_drain() -> int:
     """Get passive morale drain from damaged/destroyed windows."""
     comps = get_all_components()
     return comps.get("windows", {}).get("stats", {}).get("morale_drain", 0)
+
+
+# ── Infection Tracking ─────────────────────────────────────
+
+def infect_character(char_id: int):
+    """Mark a character as infected. Starts the clock."""
+    state = get_game_state()
+    update_character(
+        char_id,
+        infected=1,
+        infection_day=state["current_day"],
+        infection_stage=0
+    )
+
+
+def advance_infection(char_id: int) -> int:
+    """Advance infection by one stage. Returns new stage (0-4)."""
+    char = get_character(char_id)
+    if not char or not char["infected"]:
+        return 0
+    new_stage = min(4, char["infection_stage"] + 1)
+    update_character(char_id, infection_stage=new_stage)
+    return new_stage
+
+
+def get_infected_crew() -> list[dict]:
+    """Get all living infected crew members."""
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT * FROM characters WHERE infected = 1 AND is_alive = 1 ORDER BY infection_stage DESC"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def cure_infection(char_id: int):
+    """Remove infection entirely (if medicine works)."""
+    update_character(char_id, infected=0, infection_stage=0, infection_day=0)
+
+
+def delay_infection(char_id: int):
+    """Push infection back one stage (medicine buys time)."""
+    char = get_character(char_id)
+    if not char or not char["infected"]:
+        return
+    new_stage = max(0, char["infection_stage"] - 1)
+    update_character(char_id, infection_stage=new_stage)

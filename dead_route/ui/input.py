@@ -1,17 +1,19 @@
 """
 Player input handling: choice menus, text prompts, confirmations.
 All user input flows through this module.
+Every prompt flushes stdin first to prevent buffered keypresses from skipping.
 """
 
 import sys
 from ui.style import (
     Color, Theme, styled, print_styled, print_blank,
-    divider, panel
+    divider, panel, flush_input
 )
 
 
 def get_text_input(prompt: str, style: str = Theme.CHOICE) -> str:
     """Get free-text input from the player."""
+    flush_input()
     print()
     sys.stdout.write(f"{style}{prompt}{Color.RESET} ")
     sys.stdout.flush()
@@ -31,6 +33,7 @@ def get_choice(options: list[str], prompt: str = "What do you do?",
     Present numbered choices and get player selection.
     Returns 0-based index of the chosen option.
     """
+    flush_input()
     print()
     print_styled(prompt, prompt_style)
     print()
@@ -65,6 +68,7 @@ def get_choice_with_details(options: list[dict], prompt: str = "What do you do?"
     Each option: {"label": str, "description": str (optional)}
     Returns 0-based index.
     """
+    flush_input()
     print()
     print_styled(prompt, Theme.CHOICE)
     print()
@@ -98,6 +102,7 @@ def get_choice_with_details(options: list[dict], prompt: str = "What do you do?"
 
 def confirm(prompt: str = "Continue?", default_yes: bool = True) -> bool:
     """Yes/No confirmation prompt."""
+    flush_input()
     hint = "(Y/n)" if default_yes else "(y/N)"
     sys.stdout.write(f"\n{Theme.MUTED}{prompt} {hint} {Color.RESET}")
     sys.stdout.flush()
@@ -113,7 +118,8 @@ def confirm(prompt: str = "Continue?", default_yes: bool = True) -> bool:
 
 
 def press_enter(prompt: str = "Press Enter to continue..."):
-    """Wait for the player to press Enter."""
+    """Wait for the player to press Enter. Flushes buffered input first."""
+    flush_input()
     print()
     sys.stdout.write(f"{Theme.MUTED}{prompt}{Color.RESET}")
     sys.stdout.flush()

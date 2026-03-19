@@ -43,7 +43,14 @@ def run_passive_systems() -> list[str]:
 
     # ── STAMINA DRAIN ──
     for c in crew:
-        new_stam = max(0, c["stamina"] - STAMINA_DRAIN_PER_PHASE)
+        base_drain = STAMINA_DRAIN_PER_PHASE
+        # Paranoia scar adds extra stamina drain
+        try:
+            from engine.trauma import get_scar_stamina_drain
+            base_drain += get_scar_stamina_drain(c["id"])
+        except Exception:
+            pass
+        new_stam = max(0, c["stamina"] - base_drain)
         queries.update_character(c["id"], stamina=new_stam)
 
     # ── LOW TRUST CONSEQUENCES ──

@@ -14,6 +14,10 @@ from engine.actions import (
 from engine.endings import handle_haven_arrival, handle_meridian_arrival, handle_game_over
 from engine.banter import get_ambient_banter, get_context
 from engine.events import pick_random_event, resolve_choice
+from engine.infection import (
+    tick_infections, handle_turning, present_infection_choice,
+    get_infection_hud_warning, STAGES
+)
 from ui.style import Color, Theme, styled, print_styled, clear_screen, print_blank
 from ui.narration import narrator_text, dramatic_pause, scene_break, status_update
 from ui.input import get_choice, press_enter
@@ -110,7 +114,37 @@ def run():
         # ── Run passive systems ──
         warnings = run_passive_systems()
 
-        # Re-check game over after passive systems
+        # ── Tick infections (once per day, morning) ──
+        infection_events = tick_infections()
+        for ie in infection_events:
+            if ie["new_stage"] == 4:
+                # TURNING — emergency event
+                clear_screen()
+                print_blank(1)
+                scene_break("THE TURNING")
+
+                char = queries.get_character(ie["char_id"])
+                if char:
+                    turning_result = handle_turning(char)
+                    narrator_text(turning_result["narrative"])
+                    dramatic_pause(1.5)
+                    print()
+                    for cas in turning_result["casualties"]:
+                        print_styled(
+                            f"  !! {cas['name']} takes {cas['damage']} damage !!",
+                            Theme.DAMAGE
+                        )
+                    dramatic_pause(1.0)
+                    narrator_text(
+                        f"When it's over, what used to be {ie['name']} "
+                        f"lies still on the bus floor. The seats are soaked "
+                        f"in something dark. The smell will never come out."
+                    )
+                    press_enter()
+            elif ie["narrative"]:
+                warnings.append(f"INFECTION: {ie['name']} — Stage {ie['new_stage']}: {ie['stage_name']}")
+
+        # Re-check game over after passive systems + infections
         state = queries.get_game_state()
         if state["game_over"]:
             if warnings:
@@ -123,8 +157,38 @@ def run():
         clear_screen()
         show_hud()
 
+        # Show infection warnings on HUD
+        infected_crew = queries.get_infected_crew()
+        for ic in infected_crew:
+            warning = get_infection_hud_warning(ic)
+            if warning:
+                if ic["infection_stage"] >= 3:
+                    print_styled(f"  {warning}", Theme.DAMAGE + Color.BOLD)
+                elif ic["infection_stage"] >= 2:
+                    print_styled(f"  {warning}", Theme.DAMAGE)
+                else:
+                    print_styled(f"  {warning}", Theme.WARNING)
+
         if warnings:
             display_warnings(warnings)
+
+        # Show infection progression narratives (stages 1-3)
+        for ie in infection_events:
+            if ie["new_stage"] < 4 and ie["narrative"]:
+                print()
+                scene_break(f"INFECTION — {ie['name'].upper()}")
+                narrator_text(ie["narrative"])
+                dramatic_pause(0.5)
+
+                # Present choice at stage 2+
+                if ie["new_stage"] >= 2:
+                    char = queries.get_character(ie["char_id"])
+                    if char and char["is_alive"]:
+                        present_infection_choice(char)
+                        state = queries.get_game_state()
+                        if state["game_over"]:
+                            handle_game_over()
+                            return
 
         show_location_description()
 

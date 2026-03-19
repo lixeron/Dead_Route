@@ -1,5 +1,6 @@
 """
 Narration system: cinematic text crawls, dramatic text, atmospheric writing.
+All timed pauses are interruptible by pressing Enter.
 """
 
 import time
@@ -7,12 +8,28 @@ import sys
 from ui.style import (
     Color, Theme, styled, typewriter, slow_print,
     print_styled, print_blank, clear_screen, panel, divider,
-    get_terminal_width
+    get_terminal_width, _check_skip, flush_input
 )
 
 
+def _interruptible_sleep(seconds: float):
+    """Sleep that can be skipped by pressing Enter."""
+    interval = 0.05
+    elapsed = 0
+    while elapsed < seconds:
+        if _check_skip():
+            try:
+                sys.stdin.readline()
+            except Exception:
+                pass
+            return
+        _interruptible_sleep(interval)
+        elapsed += interval
+
+
 def dramatic_pause(seconds: float = 1.5):
-    time.sleep(seconds)
+    """Pause for dramatic effect. Press Enter to skip."""
+    _interruptible_sleep(seconds)
 
 
 def crawl_text(lines: list[str], delay_per_line: float = 0.04,
@@ -20,10 +37,10 @@ def crawl_text(lines: list[str], delay_per_line: float = 0.04,
     for line in lines:
         if line == "":
             print()
-            time.sleep(pause_between * 0.5)
+            _interruptible_sleep(pause_between * 0.5)
             continue
         typewriter(line, delay=delay_per_line, style=style)
-        time.sleep(pause_between)
+        _interruptible_sleep(pause_between)
 
 
 def narrator_text(text: str, pause_after: float = 0.5):
@@ -43,7 +60,7 @@ def narrator_text(text: str, pause_after: float = 0.5):
     for line in lines:
         slow_print(line, delay=0.02, style=Theme.NARRATOR)
     if pause_after:
-        time.sleep(pause_after)
+        _interruptible_sleep(pause_after)
 
 
 def dialogue(speaker: str, text: str, speaker_color: str = Theme.NPC_NAME):
@@ -66,7 +83,7 @@ def dialogue(speaker: str, text: str, speaker_color: str = Theme.NPC_NAME):
         prefix = '    "' if i == 0 else "     "
         suffix = '"' if i == len(lines) - 1 else ""
         typewriter(f"{prefix}{line}{suffix}", delay=0.025, style=Theme.DIALOGUE)
-    time.sleep(0.3)
+    _interruptible_sleep(0.3)
 
 
 def scene_break(label: str = "", style: str = Theme.MUTED):
@@ -79,7 +96,7 @@ def scene_break(label: str = "", style: str = Theme.MUTED):
     else:
         print(divider(width=width))
     print()
-    time.sleep(0.5)
+    _interruptible_sleep(0.5)
 
 
 def title_card(title: str, subtitle: str = ""):
@@ -95,7 +112,7 @@ def title_card(title: str, subtitle: str = ""):
     print_blank(1)
     print(f"{Theme.MUTED}{'═' * width}{Color.RESET}")
     print_blank(2)
-    time.sleep(1.0)
+    _interruptible_sleep(1.0)
 
 
 def reveal_text(text: str, style: str = Color.BRIGHT_WHITE, final_pause: float = 1.0):
@@ -104,12 +121,12 @@ def reveal_text(text: str, style: str = Color.BRIGHT_WHITE, final_pause: float =
     padding = max(0, (width - len(text)) // 2)
     sys.stdout.write(f"{' ' * padding}")
     typewriter(text, delay=0.05, style=style)
-    time.sleep(final_pause)
+    _interruptible_sleep(final_pause)
 
 
 def status_update(text: str, style: str = Theme.INFO):
     print(f"\n  {style}» {text}{Color.RESET}")
-    time.sleep(0.3)
+    _interruptible_sleep(0.3)
 
 
 def loot_display(items: dict):
@@ -134,4 +151,4 @@ def loot_display(items: dict):
 
 def damage_display(entity: str, amount: int):
     print(f"\n  {Theme.DAMAGE}x {entity} takes {amount} damage{Color.RESET}")
-    time.sleep(0.3)
+    _interruptible_sleep(0.3)

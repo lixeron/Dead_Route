@@ -122,31 +122,76 @@ def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
 
 
+def flush_input():
+    """Flush any buffered stdin so stale keypresses don't skip prompts."""
+    try:
+        import select
+        while select.select([sys.stdin], [], [], 0)[0]:
+            sys.stdin.read(1)
+    except Exception:
+        pass
+
+
+def _check_skip() -> bool:
+    """Check if user pressed a key (non-blocking). Returns True if input waiting."""
+    try:
+        import select
+        return bool(select.select([sys.stdin], [], [], 0)[0])
+    except Exception:
+        return False
+
+
 def typewriter(text: str, delay: float = 0.03, style: str = ""):
-    """Print text with a typewriter effect."""
+    """
+    Print text with a typewriter effect.
+    Press Enter during animation to instantly finish the current text.
+    """
+    skipping = False
     for char in text:
         sys.stdout.write(f"{style}{char}{Color.RESET}")
         sys.stdout.flush()
-        if char in ".!?":
-            time.sleep(delay * 4)
-        elif char == ",":
-            time.sleep(delay * 2)
-        elif char == "\n":
-            time.sleep(delay * 3)
-        else:
-            time.sleep(delay)
+        if not skipping:
+            if _check_skip():
+                # User pressed a key — dump the rest instantly
+                skipping = True
+                # Consume the keypress so it doesn't bleed into the next prompt
+                try:
+                    sys.stdin.readline()
+                except Exception:
+                    pass
+                continue
+            if char in ".!?":
+                time.sleep(delay * 4)
+            elif char == ",":
+                time.sleep(delay * 2)
+            elif char == "\n":
+                time.sleep(delay * 3)
+            else:
+                time.sleep(delay)
     print()
 
 
 def slow_print(text: str, delay: float = 0.02, style: str = ""):
-    """Print text word by word for dramatic pacing."""
+    """
+    Print text word by word for dramatic pacing.
+    Press Enter to instantly finish the current text.
+    """
     words = text.split(" ")
+    skipping = False
     for i, word in enumerate(words):
         sys.stdout.write(f"{style}{word}{Color.RESET}")
         if i < len(words) - 1:
             sys.stdout.write(" ")
         sys.stdout.flush()
-        time.sleep(delay)
+        if not skipping:
+            if _check_skip():
+                skipping = True
+                try:
+                    sys.stdin.readline()
+                except Exception:
+                    pass
+                continue
+            time.sleep(delay)
     print()
 
 

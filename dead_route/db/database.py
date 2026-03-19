@@ -79,7 +79,10 @@ def init_db():
             is_romanceable  INTEGER NOT NULL DEFAULT 0,
             recruited_day   INTEGER NOT NULL DEFAULT 1,
             injury          TEXT NOT NULL DEFAULT 'none',
-            morale          INTEGER NOT NULL DEFAULT 60
+            morale          INTEGER NOT NULL DEFAULT 60,
+            infected        INTEGER NOT NULL DEFAULT 0,
+            infection_day   INTEGER NOT NULL DEFAULT 0,
+            infection_stage INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS bus_components (

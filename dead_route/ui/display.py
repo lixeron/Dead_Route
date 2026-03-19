@@ -119,6 +119,22 @@ def show_crew_status():
             injury_color = Theme.DAMAGE if injury in ("critical", "infected", "badly_hurt") else Theme.WARNING
             injury_str = f"  {styled(f'[{injury_label}]', injury_color)}"
 
+        # Infection display
+        infection_str = ""
+        if c.get("infected"):
+            stage = c.get("infection_stage", 0)
+            stage_names = {
+                0: "BITTEN", 1: "FEVER", 2: "DETERIORATING",
+                3: "TERMINAL", 4: "TURNED"
+            }
+            stage_name = stage_names.get(stage, "???")
+            if stage >= 3:
+                infection_str = f"  {styled(f'[INFECTED: {stage_name}]', Theme.DAMAGE + Color.BOLD)}"
+            elif stage >= 2:
+                infection_str = f"  {styled(f'[INFECTED: {stage_name}]', Theme.DAMAGE)}"
+            else:
+                infection_str = f"  {styled(f'[INFECTED: {stage_name}]', Theme.WARNING)}"
+
         # Trust display for NPCs
         trust_str = ""
         if not c["is_player"]:
@@ -168,12 +184,23 @@ def show_crew_status():
                 return f"{styled(name, Color.GRAY)}{styled(str(effective), Theme.DAMAGE):>4}"
             return f"{styled(name, Color.GRAY)}{effective:>2}"
 
-        print(f"  {name_display}{injury_str}{trust_str}")
+        print(f"  {name_display}{injury_str}{infection_str}{trust_str}")
         print(f"    {hp_bar}{morale_str}")
         print(f"    {skill_display('Combat:', c['combat'], eff_combat)}  "
               f"{skill_display('Medical:', c['medical'], eff_medical)}  "
               f"{skill_display('Mech:', c['mechanical'], eff_mech)}  "
               f"{skill_display('Scav:', c['scavenging'], eff_scav)}")
+
+        # Scar display
+        try:
+            from engine.trauma import get_scar_display_lines
+            scar_lines = get_scar_display_lines(c["id"])
+            if scar_lines:
+                for sl in scar_lines:
+                    print(f"    {sl}")
+        except Exception:
+            pass
+
         print()
 
 

@@ -155,11 +155,17 @@ def stat_check_combat(crew_member_id: int, base_threat: int = 10) -> dict:
 
     # Trust impact from combat outcomes
     if result["result"] == "defeat":
-        # Everyone's morale takes a hit
         for c in queries.get_alive_npcs():
             queries.change_trust(c["id"], random.randint(-5, -2))
 
+    # ── INFECTION CHECK: bite chance on bad outcomes ──
+    from engine.infection import try_infect_from_combat
+    result["got_infected"] = False
     char_after = queries.get_character(crew_member_id)
+    if char_after and char_after["is_alive"] and not char_after["infected"]:
+        if try_infect_from_combat(crew_member_id, result["result"]):
+            result["got_infected"] = True
+
     result["character_died"] = not char_after["is_alive"] if char_after else True
     result["character_name"] = char["name"]
     result["combat_score"] = combat_score
