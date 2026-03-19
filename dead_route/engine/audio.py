@@ -28,17 +28,20 @@ SFX_DIR = os.path.join(PROJECT_ROOT, "audio", "sfx")
 
 # Map logical names to filenames (user can change these)
 MUSIC_FILES = {
-    "title":     "title",
-    "intro":     "intro",
-    "morning":   "morning",
-    "afternoon": "afternoon",
-    "evening":   "evening",
-    "midnight":  "midnight",
-    "combat":    "combat",
-    "event":     "event",
-    "haven":     "haven",
-    "gameover":  "gameover",
-    "travel":    "travel",
+    "title":           "title",
+    "intro":           "intro",
+    "morning":         "morning",
+    "morning_late":    "day_10_morning",      # Plays from day 10 onwards
+    "afternoon":       "afternoon",
+    "evening":         "evening",
+    "midnight":        "midnight",
+    "combat":          "combat",
+    "event":           "event",
+    "haven":           "haven",
+    "gameover":        "gameover",
+    "travel":          "travel",
+    "horror_ambient":  "horror_ambient",      # Eerie silence — infection, turning, dark moments
+    "glitch":          "glitch",              # 4th wall event
 }
 
 SFX_FILES = {
@@ -252,8 +255,12 @@ PHASE_MUSIC = {
 }
 
 
-def play_phase_music(phase: str):
-    """Play the appropriate music for the current game phase."""
-    track = PHASE_MUSIC.get(phase)
-    if track:
-        audio.play_music(track)
+def play_phase_music(phase: str, day: int = 1):
+    """Play the appropriate music for the current game phase.
+    Morning music swaps to a darker track from day 10 onwards."""
+    if phase == "morning" and day >= 10:
+        audio.play_music("morning_late")
+    else:
+        track = PHASE_MUSIC.get(phase)
+        if track:
+            audio.play_music(track)

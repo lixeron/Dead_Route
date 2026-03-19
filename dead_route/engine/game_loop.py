@@ -137,6 +137,7 @@ def run():
         for ie in infection_events:
             if ie["new_stage"] == 4:
                 # TURNING — emergency event
+                audio.play_music("horror_ambient")
                 clear_screen()
                 print_blank(1)
                 scene_break("THE TURNING")
@@ -176,7 +177,7 @@ def run():
         show_hud()
 
         # ── Phase music ──
-        play_phase_music(state["current_phase"])
+        play_phase_music(state["current_phase"], state["current_day"])
 
         # Show infection warnings on HUD
         infected_crew = queries.get_infected_crew()
@@ -196,6 +197,8 @@ def run():
         # Show infection progression narratives (stages 1-3)
         for ie in infection_events:
             if ie["new_stage"] < 4 and ie["narrative"]:
+                if ie["new_stage"] >= 2:
+                    audio.play_music("horror_ambient")
                 print()
                 scene_break(f"INFECTION — {ie['name'].upper()}")
                 narrator_text(ie["narrative"])
@@ -222,6 +225,14 @@ def run():
         if state["game_over"]:
             handle_game_over()
             return
+
+        # ── 4th wall check (rare, dark-choice dependent) ──
+        from engine.fourth_wall import should_trigger, run_fourth_wall_event
+        if should_trigger():
+            run_fourth_wall_event()
+            # The event consumed this phase — advance and continue
+            queries.advance_phase()
+            continue
 
         # ── Player action ──
         phase = state["current_phase"]
