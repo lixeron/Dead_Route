@@ -1,6 +1,6 @@
 # 🧟 DEAD ROUTE
 
-[![CI](https://github.com/YOUR_USERNAME/dead-route/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/dead-route/actions/workflows/ci.yml)
+[![CI](https://github.com/lixeron/Dead_Route/actions/workflows/ci.yml/badge.svg)](https://github.com/lixeron/Dead_Route/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
