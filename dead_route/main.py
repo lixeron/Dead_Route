@@ -26,11 +26,14 @@ def create_player(intro_result: dict):
         obj=intro_result["obj"],
         poss=intro_result["poss"],
     )
-    queries.set_resources(fuel=15, food=5, scrap=2, ammo=4, medicine=1)
+    from engine.balance import STARTING_RESOURCES, STARTING_PLAYER_STATS
+    queries.set_resources(**STARTING_RESOURCES)
 
     skill = intro_result["starting_skill"]
-    stats = {"combat": 3, "medical": 3, "mechanical": 3, "scavenging": 3}
-    stats[skill] = 6
+    base = STARTING_PLAYER_STATS["base"]
+    boosted = STARTING_PLAYER_STATS["boosted"]
+    stats = {"combat": base, "medical": base, "mechanical": base, "scavenging": base}
+    stats[skill] = boosted
 
     queries.create_character(name=intro_result["player_name"], is_player=True, **stats)
 

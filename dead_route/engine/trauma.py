@@ -189,14 +189,10 @@ def roll_for_scar(char_id: int, combat_result: str) -> dict | None:
     if not char or not char["is_alive"]:
         return None
 
-    # Base chance by outcome
-    chances = {
-        "decisive_victory": 0.0,
-        "victory": 0.0,
-        "pyrrhic": 0.15,
-        "defeat": 0.30,
-    }
-    chance = chances.get(combat_result, 0.0)
+    # Base chance by outcome — scales with era
+    from engine.balance import get_balance
+    era_chances = get_balance("SCAR_CHANCE")
+    chance = era_chances.get(combat_result, 0.0) if era_chances else 0.0
 
     if chance <= 0 or random.random() > chance:
         return None

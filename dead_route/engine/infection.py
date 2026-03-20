@@ -106,6 +106,19 @@ PROGRESSION_NARRATIVE = {
         "glistening underneath. {name} alternates between fits of weeping and "
         "sudden, violent outbursts. During one, {they} don't recognize anyone "
         "on the bus for almost a minute.",
+
+        "You wake to a sound that doesn't belong on the bus — a wet, rhythmic "
+        "tearing, like someone pulling apart a roast chicken with their bare "
+        "hands. {name} is sitting upright in the dark, scratching at {their} "
+        "own forearm. Not scratching — peeling. Strips of skin come away in "
+        "long, curling ribbons, exposing the meat underneath. Grey-pink muscle "
+        "glistens in the moonlight. {name} isn't screaming. {They}'re humming. "
+        "A lullaby, maybe. Something from before.\n\n"
+        "The smell is indescribable. Wet rot and copper and something chemical — "
+        "like formaldehyde mixed with spoiled milk. It coats the inside of your "
+        "nostrils and won't leave. Two people vomit. {name} keeps humming. Keeps "
+        "peeling. The pile of skin on the seat beside {them} looks like a "
+        "discarded glove.",
     ],
 
     3: [
@@ -135,6 +148,27 @@ PROGRESSION_NARRATIVE = {
         "dangerous. The bus reeks of something ancient and wrong — not just "
         "death, but something that was never supposed to exist.\n\n"
         "Whatever {name} was is almost gone. What's replacing it doesn't sleep.",
+
+        "{name}'s body has become a geography of ruin. The skin across {their} "
+        "torso has gone translucent — you can see the organs underneath, dark "
+        "shapes moving sluggishly beneath a membrane that was never meant to be "
+        "seen from the outside. The bite wound on {their} arm has expanded into "
+        "a crater the size of a fist, the edges black and crusted, the center "
+        "a wet red pit that pulses in time with a heartbeat that's too fast and "
+        "too irregular to sustain life.\n\n"
+        "{Their} lips have pulled back from {their} teeth in a permanent rictus "
+        "grin — not a smile, a biological failure. The gums are black. Several "
+        "teeth have loosened and fallen out, rattling on the bus floor like dice. "
+        "The tongue behind them is swollen and grey, lolling against the lower "
+        "jaw with each labored breath. The breath itself is visible — a faint, "
+        "yellowish vapor that smells like an open grave in August.\n\n"
+        "Every few minutes, {name}'s body convulses. The spine arches. The "
+        "fingers claw at the air. A sound comes out — not a moan, not a scream, "
+        "but something between the two. The sound of a person being erased from "
+        "the inside. The sound of something else taking their place.\n\n"
+        "Nobody can look at {name} directly anymore. But nobody can stop looking "
+        "either. It's coming. Soon. And when it does, whatever stands up in "
+        "{name}'s seat won't be asking for help.",
     ],
 }
 
@@ -218,14 +252,10 @@ def try_infect_from_combat(char_id: int, combat_result: str) -> bool:
     if not char or char["infected"]:
         return False
 
-    # Infection chance by combat outcome
-    chances = {
-        "decisive_victory": 0.0,
-        "victory": 0.02,
-        "pyrrhic": 0.12,
-        "defeat": 0.25,
-    }
-    chance = chances.get(combat_result, 0.0)
+    # Infection chance by combat outcome — scales with era
+    from engine.balance import get_balance
+    era_chances = get_balance("INFECTION_CHANCE")
+    chance = era_chances.get(combat_result, 0.0) if era_chances else 0.0
 
     # Armor plating reduces bite chance
     absorption = queries.get_damage_absorption()

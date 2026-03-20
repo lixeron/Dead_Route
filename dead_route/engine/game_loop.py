@@ -19,6 +19,11 @@ from engine.infection import (
     get_infection_hud_warning, STAGES
 )
 from engine.audio import audio, play_phase_music
+from engine.direction import (
+    show_progress_bar, check_milestone, get_meridian_hint,
+    get_npc_hint, check_era_transition
+)
+from engine.balance import get_era, get_balance, EVENT_CHANCE_PER_PHASE
 from ui.style import Color, Theme, styled, print_styled, clear_screen, print_blank
 from ui.narration import narrator_text, dramatic_pause, scene_break, status_update
 from ui.input import get_choice, press_enter
@@ -73,11 +78,8 @@ def maybe_show_banter():
         _interruptible_sleep(0.4)
 
 
-def check_random_event():
-    """Roll for a random event to fire (25% per phase)."""
-    if random.random() > 0.25:
-        return
-
+def _fire_random_event():
+    """Fire a random event (probability already checked by caller)."""
     event = pick_random_event()
     if not event:
         return
@@ -176,6 +178,9 @@ def run():
         clear_screen()
         show_hud()
 
+        # ── Route progress ──
+        show_progress_bar()
+
         # ── Phase music ──
         play_phase_music(state["current_phase"], state["current_day"])
 
@@ -190,6 +195,12 @@ def run():
                     print_styled(f"  {warning}", Theme.DAMAGE)
                 else:
                     print_styled(f"  {warning}", Theme.WARNING)
+
+        # ── Meridian hints ──
+        meridian_hint = get_meridian_hint()
+        if meridian_hint:
+            print()
+            print_styled(f"  {Color.ITALIC}{meridian_hint}{Color.RESET}", Theme.MUTED)
 
         if warnings:
             display_warnings(warnings)
@@ -216,8 +227,14 @@ def run():
 
         show_location_description()
 
-        # ── Crew banter ──
+        # ── Crew banter + NPC hints ──
         maybe_show_banter()
+
+        # NPC route/survival hint
+        npc_hint = get_npc_hint()
+        if npc_hint:
+            print()
+            print(f"  {Theme.MUTED}{Color.ITALIC}{npc_hint}{Color.RESET}")
 
         # ── Forced crisis events ──
         check_forced_events()
@@ -304,6 +321,19 @@ def run():
             scene_break(f"DAY {new_day} — MORNING")
             narrator_text(random.choice(day_texts))
 
+            # ── Era transition ──
+            era_text = check_era_transition()
+            if era_text:
+                print()
+                narrator_text(era_text)
+                dramatic_pause(1.0)
+
+            # ── Milestone check ──
+            milestone_text = check_milestone()
+            if milestone_text:
+                print()
+                narrator_text(milestone_text)
+
             new_state = queries.get_game_state()
             if new_state["threat_level"] > state["threat_level"]:
                 print()
@@ -320,5 +350,8 @@ def run():
 
             press_enter()
 
-        # ── Random event ──
-        check_random_event()
+        # ── Random event (frequency scales with era) ──
+        era = get_era()
+        event_chance = EVENT_CHANCE_PER_PHASE.get(era, 0.25)
+        if random.random() < event_chance:
+            _fire_random_event()

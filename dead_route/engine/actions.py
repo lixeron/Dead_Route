@@ -99,11 +99,9 @@ def do_explore():
         press_enter()
         return
 
-    # Combat chance — MUCH higher at night
-    combat_chances = {
-        "morning": 0.25, "afternoon": 0.40,
-        "evening": 0.60, "midnight": 0.80,
-    }
+    # Combat chance — scales by era and phase
+    from engine.balance import get_balance
+    combat_chances = get_balance("COMBAT_CHANCE")
     combat_chance = combat_chances.get(state["current_phase"], 0.35)
     combat_chance = min(0.95, combat_chance + state["threat_level"] * 0.03)
 
