@@ -210,27 +210,28 @@ def _generate_resource_loss() -> dict:
 
 
 def generate_combat_narrative(result: dict) -> str:
+    """Generate visceral, graphic narrative for combat outcomes."""
     name = result["character_name"]
     narratives = {
         "decisive_victory": [
-            f"{name} doesn't even break a sweat. Clean kills, no wasted motion.",
-            f"It's over in seconds. {name} moves like a machine.",
-            f"{name} handles it with brutal efficiency. Not a scratch.",
+            f"{name} moves like something out of a nightmare — their nightmare. The first one loses its jaw to a sideways swing, teeth and black blood spraying across the asphalt. The second catches a blade through the temple. It drops mid-lunge. The third doesn't even get close. Clean. Surgical. Over.",
+            f"Three of them come around the corner and {name} puts them down before the scream finishes leaving your throat. Head shots. Each one. The bodies hit the ground in sequence — thud, thud, thud — like a drumroll. {name} doesn't even check. Already moving on.",
+            f"{name} handles it with a violence that's almost beautiful. The first one's skull caves in with a wet crunch. The second gets its throat opened from ear to ear, black ichor pouring down its chest in sheets. The third is already falling by the time {name} turns to face it. Not a scratch. Not a drop of wasted effort.",
         ],
         "victory": [
-            f"{name} takes a hit but puts them down. Blood on the sleeve, but nothing critical.",
-            f"A messy fight. {name} comes out on top, but not unscathed.",
-            f"The zombies go down hard. {name} catches a claw across the arm. It bleeds freely.",
+            f"{name} takes a claw across the forearm — three ragged lines that immediately well with bright red blood, skin peeling back in flaps. {name} screams, more anger than pain, and buries the blade in the thing's skull so hard it sticks. Yanks it free with a sound like pulling a boot out of mud. The zombie crumples. {name} grabs the wound, blood streaming between white-knuckled fingers.",
+            f"A messy fight. One of them gets its teeth into {name}'s jacket — just the jacket, thank God — and {name} drives an elbow into its face hard enough to shatter what's left of the nasal bone. Rotting cartilage collapses inward. Another one rakes its nails down {name}'s back, leaving four parallel trenches in the skin that bloom red instantly. {name} spins, swings, connects. Bone snaps. It goes down.",
+            f"The first one dies easy. The second one doesn't. It gets its hands around {name}'s throat and SQUEEZES — fingernails punching through skin, blood running down {name}'s collar in warm rivulets. {name}'s face goes red, then purple. A desperate knee to the thing's midsection does nothing. Finally, {name} jams both thumbs into its eye sockets — the eyes pop with a wet squelch — and the grip loosens enough to break free. {name} gasps, coughs blood, and crushes the thing's skull against the pavement.",
         ],
         "pyrrhic": [
-            f"{name} barely makes it out. Torn clothes, deep wounds, shaking hands. The zombies are dead, but the cost is steep.",
-            f"It's ugly. {name} goes down, gets back up, goes down again. The last one stops twitching, and {name} collapses against the bus.",
-            f"Too many of them. {name} fights through but the bus takes a beating too. Dents, cracks, and something leaking underneath.",
+            f"There are too many. {name} fights like an animal — snarling, swinging, taking hits that would drop a normal person. A zombie tears a chunk of flesh from {name}'s shoulder, a strip of meat and skin ripping free with a sound like velcro. {name} SCREAMS — a raw, throat-shredding howl — and keeps swinging. Blood pours down {name}'s arm, pooling at the elbow, dripping from the fingertips. By the time the last one falls, {name} is standing in a circle of corpses, swaying, painted head to toe in a mix of red and black.",
+            f"One of them tackles {name} to the ground. Its mouth opens — the jaw unhinges wider than should be possible, rows of yellow teeth framed in blackened gums — and snaps down inches from {name}'s face. {name} gets an arm up just in time. The teeth sink into the forearm guard instead, cracking through plastic and into the padding beneath. Another one piles on, clawing at {name}'s legs, nails tearing through denim and into the flesh of the thigh. {name} thrashes, screams, drives a knee into the first one's chest cavity — ribs crack and give way with a sickening crunch — and rolls free. Standing hurts. Everything hurts.",
+            f"The fight goes sideways fast. A zombie gets behind {name} and rakes its fingers across {name}'s face — a line of fire from temple to jawline, skin splitting open, blood sheeting into {name}'s left eye. Half-blind, {name} swings wild, connecting with something soft that bursts on impact. Another one slams into {name}'s side — the crack of a rib breaking is audible from the bus. {name} doubles over, vomits, and somehow keeps fighting. The zombies die. {name} lives. The word 'lives' is doing a lot of heavy lifting.",
         ],
         "defeat": [
-            f"There are too many. {name} is overwhelmed. By the time backup arrives, blood is everywhere.",
-            f"{name} fights hard but it's not enough. The horde surges forward. Supplies scatter across the ground as you barely pull {name} back to the bus.",
-            f"A disaster. {name} is swarmed. The bus rocks on its axles as bodies slam into the sides. You floor it and don't look back.",
+            f"They swarm {name} like water over a rock. There are too many hands, too many mouths, too many broken fingers reaching and grabbing and tearing. {name} disappears under the pile — you catch glimpses through the mass of rotting bodies: a hand reaching up, fingers clawing at air, then dragged back down. The screaming is the worst part. It starts as words — \"HELP ME HELP ME\" — and becomes something wordless and raw. By the time you drag {name} free, the screaming has stopped. {name}'s clothes are shredded. Skin is visible underneath — torn, bitten, bleeding from a dozen wounds that look like mouths.",
+            f"{name} goes down hard. A zombie drives {name}'s face into the concrete — the impact splits the skin above the eyebrow, and blood floods the left eye in a warm red curtain. More of them pile on. You hear fabric tearing, then the wetter sound of skin tearing, then {name}'s voice breaking apart into screams that don't sound human anymore. Boots kick. Hands claw. You see {name}'s arm at a wrong angle — dislocated or broken, impossible to tell through the blood. You drag {name} into the bus by the collar. {name}'s body leaves a smear on the steps.",
+            f"A disaster. {name} is grabbed by three of them at once — one on each arm, one with its fingers hooked into {name}'s belt. They pull in different directions. {name}'s shoulder makes a sound like a chicken wing being torn apart. The scream that comes out of {name} is inhuman — a shriek so loud and raw it hurts your ears from inside the bus. Blood sprays from the shoulder where something has torn loose. You gun the engine, the bus lurches forward, and someone grabs {name}'s outstretched hand just in time. {name} is dragged aboard, sobbing, bleeding, shaking so hard the bus seat vibrates.",
         ],
     }
     options = narratives.get(result["result"], ["The fight resolves."])

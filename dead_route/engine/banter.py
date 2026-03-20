@@ -157,6 +157,176 @@ BANTER = {
             "\"Sleep,\" Rhea says. It's not a suggestion. She'll handle the night.",
         ],
     },
+    "sardonic": {
+        "idle": [
+            "Javi is preparing something in a dented pot. It smells... actually good? How is that possible?",
+            "\"I once made a reduction sauce from motor oil and despair,\" Javi says. \"It tasted better than this canned stuff.\"",
+            "Javi has organized the food supplies by expiration date. They're all expired. He's organized them by 'how expired.'",
+            "\"In my restaurant, this would be a health code violation. Out here, it's dinner.\" Javi plates the mystery meat on a hubcap.",
+            "Javi is sharpening his cooking knife. It's the most dangerous weapon on the bus and nobody talks about it.",
+        ],
+        "low_fuel": [
+            "\"I can cook without gas,\" Javi says. \"I cannot drive without gas. My skills have limits.\"",
+            "Javi stares at the fuel gauge. \"I've seen soufflés with more substance.\"",
+        ],
+        "low_food": [
+            "Javi is chewing his lip, staring at the empty shelves. This is personal for him. A cook without ingredients is a person without purpose.",
+            "\"Give me a rat and thirty minutes,\" Javi says flatly. \"I'll make it taste like chicken. Don't ask how I know this.\"",
+        ],
+        "after_combat": [
+            "Javi wipes something off his cooking knife. \"Zombies are like bad customers. They keep coming back and they never tip.\"",
+            "\"Everyone still have all their limbs? Good. I can't cook for people who can't hold a spoon.\"",
+        ],
+        "night": [
+            "Javi heats water on a camp stove. It's just hot water with a leaf in it. He calls it tea and nobody argues.",
+            "\"I used to close the restaurant at 2 AM,\" Javi says, staring out the window. \"Walking to my car in the dark never used to be terrifying.\"",
+        ],
+    },
+    "faithful": {
+        "idle": [
+            "Preacher Wells reads from his bullet-riddled Bible, lips moving silently. The book falls open to the same page every time.",
+            "\"The Lord works in mysterious ways,\" Preacher says. He pauses. \"These ways are more mysterious than usual.\"",
+            "Preacher is humming a hymn under his breath. It fills the bus with something that isn't quite peace, but isn't quite nothing either.",
+            "Wells has carved tiny crosses into the dashboard with his thumbnail. Nobody asked him to stop. It felt wrong to.",
+            "\"I've buried more people in six months than forty years of ministry,\" Preacher says quietly. \"Each one by name. Each one matters.\"",
+        ],
+        "low_fuel": [
+            "\"Moses wandered forty years in the desert,\" Preacher says. \"We'll manage without fuel for a few more miles.\" He doesn't sound convinced.",
+            "Preacher prays over the fuel tank. Marcus gives him a look. \"Can't hurt,\" Preacher says.",
+        ],
+        "low_food": [
+            "\"Loaves and fishes,\" Preacher murmurs, dividing the last scraps. He gives away his share when he thinks nobody's watching.",
+            "Preacher's hands shake when he distributes the rations. Not from hunger. From the weight of choosing who gets how much.",
+        ],
+        "after_combat": [
+            "Preacher closes his eyes and whispers something over the fallen infected. Nobody mocks him for it.",
+            "\"They were people once,\" Preacher says, looking at the bodies. \"I pray for what they were. Not what they became.\"",
+        ],
+        "night": [
+            "Preacher reads scripture by moonlight. The words are old. The comfort is real.",
+            "\"'Yea, though I walk through the valley of the shadow of death,'\" Preacher whispers. He looks out the window. \"This is the valley. We're in it.\"",
+        ],
+    },
+    "anxious": {
+        "idle": [
+            "Sam is checking the locks on the bus door. Again. For the ninth time in an hour.",
+            "Sam's leg bounces constantly. The vibration travels through the bus floor. Nobody mentions it.",
+            "\"Do you think they can smell us?\" Sam asks, eyes wide. \"Like, through the metal? Can they smell through metal?\"",
+            "Sam has memorized every exit on the bus. There are three. He recites them under his breath like a prayer.",
+            "Sam is building something out of scrap wire and batteries. He won't say what. His hands are steadier when they're busy.",
+        ],
+        "low_fuel": [
+            "Sam's breathing goes shallow. \"If we stop... if the bus stops moving...\" He can't finish the sentence. He doesn't need to.",
+            "\"I calculated our range,\" Sam says, voice cracking. \"We have maybe twelve miles. Maybe.\"",
+        ],
+        "low_food": [
+            "Sam hasn't asked for food in two days. Not because he's not hungry. Because asking means admitting how bad it is.",
+            "\"I'm fine,\" Sam says. His stomach disagrees loudly. He wraps his arms around it like he can muffle the sound.",
+        ],
+        "after_combat": [
+            "Sam is sitting in the corner, knees to chest, rocking slightly. He was brave during the fight. The fear always hits after.",
+            "Sam's hands won't stop shaking. He keeps looking at the blood on them. \"I'm okay,\" he says to nobody. \"I'm okay I'm okay I'm okay.\"",
+        ],
+        "night": [
+            "Sam doesn't sleep. He sits by the window with a flashlight, clicking it on and off. On and off. On and off.",
+            "\"What was that sound?\" Sam whispers. There was no sound. But now everyone's listening.",
+        ],
+    },
+    "weary": {
+        "idle": [
+            "Doc Harlan lowers himself into a seat with a groan that contains multitudes. \"My knees filed a formal complaint this morning.\"",
+            "\"I've been alive for seventy-one years,\" Doc says. \"Sixty-nine of them were practice for this nonsense.\"",
+            "Doc is napping sitting up, chin on chest. His hand still rests on the medical bag. Even asleep, he's on call.",
+            "\"When I was your age,\" Doc starts. Everyone groans. He grins. \"Got you. I hate that phrase too.\"",
+            "Doc polishes his reading glasses on his shirt. They're cracked. He squints through them anyway. \"Good enough for government work.\"",
+        ],
+        "low_fuel": [
+            "\"I'm too old to walk,\" Doc says plainly. \"So I suggest we find fuel. My alternative contribution is dying dramatically and reducing the headcount.\"",
+        ],
+        "low_food": [
+            "\"I've got maybe three weeks in me without food,\" Doc says with clinical detachment. \"Younger folks have longer. Prioritize accordingly.\"",
+            "Doc hands his ration to Sam without a word. When Sam protests, Doc says, \"Hush. I'm investing in the future. Eat.\"",
+        ],
+        "after_combat": [
+            "Doc works on the wounded with steady, ancient hands. His movements are slow but precise. He's done this a thousand times. Just usually on dogs.",
+            "\"Adrenaline is a hell of a drug,\" Doc mutters, stitching a wound. \"Enjoy it while it lasts. The shaking starts in about ten minutes.\"",
+        ],
+        "night": [
+            "Doc can't sleep anymore. Not because of fear — because his body has forgotten how. He sits watch because someone should.",
+            "\"Old people don't need much sleep,\" Doc says. \"That's a myth, by the way. We need it. We just can't have it.\"",
+        ],
+    },
+    "determined": {
+        "idle": [
+            "Zara is filming. Always filming. The camera lens catches everything — the blood, the beauty, the bus.",
+            "\"Fourteen hours of footage,\" Zara says, checking the camera's dying battery. \"Fourteen hours of proof that we existed.\"",
+            "Zara is writing in a notebook when the camera dies. The record continues. It always continues.",
+            "\"Someone asked me why I bother,\" Zara says. \"Because someday, someone is going to need to know what happened. And I'll be the one who shows them.\"",
+            "Zara interviews the crew when they let her. Most don't. But the ones who do talk for hours. Like they've been waiting for someone to ask.",
+        ],
+        "low_fuel": [
+            "Zara films the fuel gauge. \"For the record,\" she says. Everything is for the record.",
+            "\"If this is where the story ends,\" Zara says, raising the camera, \"at least it'll have documentation.\"",
+        ],
+        "low_food": [
+            "Zara doesn't complain about hunger. She documented famine in three countries. This isn't new. It's just personal now.",
+        ],
+        "after_combat": [
+            "Zara filmed the whole fight. Her hands didn't shake once. She's shaking now, though. After.",
+            "\"I need to document the injuries,\" Zara says, camera raised. Elena blocks the lens. \"Not now.\" For once, Zara listens.",
+        ],
+        "night": [
+            "Zara reviews footage by the blue light of the camera screen. Her face is illuminated in ghost-light. She looks haunted by what she's captured.",
+        ],
+    },
+    "volatile": {
+        "idle": [
+            "Colt is flipping his knife. The blade catches light with each rotation. Nobody sits next to him.",
+            "\"What are you looking at?\" Colt says to nobody in particular. The bus goes quiet.",
+            "Colt carved something into the back of a bus seat. It's a name. Not his. He won't talk about it.",
+            "You catch Colt staring at his hands. Old scars crisscross the knuckles. He clenches them into fists when he sees you looking.",
+            "Colt laughs at something. The laugh is sharp and short and nobody else was part of the joke.",
+        ],
+        "low_fuel": [
+            "\"If this bus stops, I'm not dying sitting in a metal box,\" Colt says. \"I'll take my chances on foot.\" He means it.",
+        ],
+        "low_food": [
+            "Colt eyes the rations with a look that makes everyone uncomfortable. Prison taught him things about scarcity that civilization shouldn't know.",
+            "\"In the joint, you fought for every meal,\" Colt says. \"At least out here, the competition can't file a shiv.\"",
+        ],
+        "after_combat": [
+            "Colt is smiling. It's worse than Dex's combat grin because there's nothing behind it. Just reflex. Just violence rewarding itself.",
+            "Blood on Colt's knuckles. Not his. He wipes it on his jeans without looking at it. Routine.",
+        ],
+        "night": [
+            "Colt sleeps with one eye open. Literally. It's deeply unsettling.",
+            "\"I've slept in worse places,\" Colt says, stretching out across a bus seat. \"At least this cage moves.\"",
+        ],
+    },
+    "gentle": {
+        "idle": [
+            "Iris is folding blankets. There are three blankets on the bus. She has folded them seven times today.",
+            "Iris sits next to whoever looks like they need it most. She doesn't speak. She just sits. Sometimes that's enough.",
+            "\"How are you?\" Iris asks. She means it. Not the social pleasantry — the actual question. She waits for the real answer.",
+            "Iris found wildflowers growing through a crack in the highway. She put them in an empty can on the dashboard. Nobody has moved them.",
+            "Iris hums while she works. Not a song. Just a sound. Warm and low, like a mother's voice through a wall.",
+        ],
+        "low_fuel": [
+            "Iris doesn't panic. She just quietly begins organizing what they'll need to carry if they have to walk. Practical compassion.",
+        ],
+        "low_food": [
+            "Iris divides her ration into three portions and gives two away before anyone can stop her. \"I ate earlier,\" she lies. Nobody believes her.",
+            "\"Hunger passes,\" Iris says softly. \"Kindness doesn't. Feed someone today and they remember it forever.\"",
+        ],
+        "after_combat": [
+            "Iris is the first one tending wounds after every fight. Her hands are gentle even when the injuries aren't.",
+            "Iris holds someone's hand while Elena stitches them up. She doesn't flinch at the blood. She spent years watching people suffer. She just learned to be present for it.",
+        ],
+        "night": [
+            "Iris stays up with whoever can't sleep. She doesn't offer solutions. She just listens. Sometimes at 3 AM, that's the only medicine that works.",
+            "\"You don't have to be strong right now,\" Iris whispers to someone crying in the dark. \"That's what the rest of us are for.\"",
+        ],
+    },
 }
 
 CROSS_BANTER = [
@@ -173,6 +343,26 @@ CROSS_BANTER = [
     ("intellectual", "stoic", "Nadia asks Rhea about her unit. Long silence. \"They're gone.\" Nadia nods and goes back to her notebook."),
     ("intellectual", "optimist", "Tommy asks Nadia to explain the virus in simple terms. She tries. Tommy's smile falters for the first time."),
     ("optimist", "stoic", "Tommy offers Rhea a high five. She stares at his hand. He slowly lowers it. \"Rain check.\""),
+    ("sardonic", "optimist", "Tommy says the sunrise is beautiful. Javi says it looks like the sky is bleeding. They stare at each other. \"We're VERY different people,\" Tommy says."),
+    ("sardonic", "gruff", "Marcus and Javi argue about the best way to cook canned beans. It's the most passionate either of them has been in weeks. Nobody has the heart to tell them the beans are gone."),
+    ("sardonic", "anxious", "Javi hands Sam a plate of something unidentifiable. \"Don't ask what it is.\" Sam asks. \"I told you not to ask.\" Sam puts the plate down. Picks it back up. Eats it anyway."),
+    ("sardonic", "weary", "\"How are your knees, Doc?\" Javi asks. \"How's your cooking?\" Doc replies. \"Touché.\" They share a companionable silence."),
+    ("faithful", "volatile", "Preacher offers to pray with Colt. Colt says something unprintable. Preacher nods. \"I'll pray for you anyway.\" Colt doesn't stop him."),
+    ("faithful", "intellectual", "Nadia and Preacher have a quiet debate about creation and evolution. It's the most respectful argument anyone's heard in months. They agree to disagree. Then they keep talking."),
+    ("faithful", "anxious", "Preacher puts a hand on Sam's shoulder. Sam flinches, then doesn't. \"You're going to be alright, son.\" Sam nods. He almost believes it."),
+    ("faithful", "gentle", "Preacher and Iris sit together in silence. Two people whose job was comforting the dying, doing the same thing for the living."),
+    ("anxious", "reckless", "Dex tries to teach Sam to shoot. Sam's hands shake so badly the barrel traces figure-eights. \"Okay,\" Dex says gently. \"Let's start with holding it.\""),
+    ("anxious", "stoic", "Sam asks Rhea if she's ever scared. She looks at him for a long time. \"Every day.\" Sam's eyes go wide. It somehow makes him feel better."),
+    ("anxious", "gentle", "Iris finds Sam hyperventilating in the back of the bus at 3 AM. She sits next to him and breathes slowly. In. Out. In. Out. After ten minutes, he matches her rhythm."),
+    ("weary", "cautious", "Doc and Elena swap medical war stories. Doc's involve a lot more dogs. \"A hip replacement is a hip replacement,\" Doc insists. Elena looks horrified."),
+    ("weary", "volatile", "Colt asks Doc if he's afraid of dying. \"Son, I'm seventy-one. I've been afraid of dying since before you were born. I just got bored of the fear.\""),
+    ("determined", "intellectual", "Zara interviews Nadia about the pathogen. Three hours later, they're still talking. The footage will be the most important scientific record of LAZARUS in existence."),
+    ("determined", "stoic", "Zara asks Rhea for an interview. \"No.\" \"Just five minutes.\" \"No.\" \"What about—\" \"No.\" Zara writes down 'refused interview x4' in her notebook."),
+    ("determined", "sardonic", "Zara films Javi cooking. \"Apocalypse Kitchen, episode forty-seven,\" she narrates. Javi plays along with a full cooking show performance. It's the best content she's captured."),
+    ("volatile", "reckless", "Colt and Dex compare kill counts. The energy between them is competitive and dangerous. Everyone else watches nervously. It's like two pit bulls circling."),
+    ("volatile", "gruff", "Marcus catches Colt going through someone's bag. Their eyes meet. Colt puts the bag down. Slowly. Marcus doesn't blink. Some conversations don't need words."),
+    ("gentle", "sardonic", "Iris asks Javi to teach her to cook. He's unexpectedly patient. \"You're burning it.\" \"Sorry!\" \"No, keep burning it. You'll learn what too far smells like. Everything in cooking is learning limits.\""),
+    ("gentle", "weary", "Iris brings Doc water. He takes it without a word. She sits beside him. \"You don't have to carry everyone, Doc.\" \"Neither do you, Iris.\" They both know they won't stop."),
 ]
 
 

@@ -47,6 +47,62 @@
       "backstory": "National Guard reservist who watched her entire unit get overrun. Follows orders, keeps watch, says very little.",
       "is_romanceable": 1,
       "intro_dialogue": "She's standing at a crossroads, rifle slung across her back, dog tags catching the light. She looks at the bus, then at you. A single nod. \"I'll pull my weight.\""
+    },
+    {
+      "name": "Javi Moreno",
+      "personality": "sardonic",
+      "combat": 3, "medical": 4, "mechanical": 3, "scavenging": 8,
+      "backstory": "Former line cook from a Michelin-starred restaurant. Can make anything edible out of anything. His humor is so dry it could start fires.",
+      "is_romanceable": 1,
+      "intro_dialogue": "A man is sitting on the roof of a dumpster, calmly eating something from a tin can with a sharpened spoon. He sees the bus and raises the can in a toast. \"Five-star dining, end of the world ambiance. You want a reservation?\""
+    },
+    {
+      "name": "Preacher Wells",
+      "personality": "faithful",
+      "combat": 3, "medical": 6, "mechanical": 2, "scavenging": 3,
+      "backstory": "Former pastor from a small Baptist church. His congregation is gone but his faith isn't. Carries a Bible with bullet holes in it. Genuinely kind in a world that punishes kindness.",
+      "is_romanceable": 0,
+      "intro_dialogue": "An older man in a dusty black coat stands at the doorway of a collapsed church, hands folded. His eyes are clear and steady. \"The Lord didn't send a chariot. He sent a school bus. I can work with that.\""
+    },
+    {
+      "name": "Sam Osei",
+      "personality": "anxious",
+      "combat": 2, "medical": 3, "mechanical": 6, "scavenging": 5,
+      "backstory": "Nineteen years old. Was studying engineering before the outbreak. Smart, resourceful, but terrified every second of every day. Somehow still alive.",
+      "is_romanceable": 0,
+      "intro_dialogue": "A kid — barely out of high school — is hiding inside a vending machine. Like, physically inside it, curled around the snack shelves. When you pry the door open, two wide eyes stare out. \"Please don't eat me. I know that sounds weird. But please.\""
+    },
+    {
+      "name": "Doc Harlan",
+      "personality": "weary",
+      "combat": 4, "medical": 8, "mechanical": 3, "scavenging": 3,
+      "backstory": "Retired veterinarian. Seventy-one years old. Keeps saying he's too old for this. Keeps not dying. His medical knowledge is invaluable even if he insists he only knows how to treat dogs.",
+      "is_romanceable": 0,
+      "intro_dialogue": "A white-haired man is stitching a wound on his own forearm with dental floss and a sewing needle. He doesn't flinch. He looks up. \"I'm a vet. Animals, not soldiers. But a body's a body. You need a doctor, I'm close enough.\""
+    },
+    {
+      "name": "Zara Khalil",
+      "personality": "determined",
+      "combat": 5, "medical": 2, "mechanical": 3, "scavenging": 6,
+      "backstory": "War correspondent who covered three conflicts before LAZARUS. She's been documenting the apocalypse on a handheld camera with a dying battery. The footage is the only record of what happened.",
+      "is_romanceable": 1,
+      "intro_dialogue": "A woman with a press vest and a battered camera approaches the bus, filming the whole time. \"I'm documenting this. All of it. Someone has to remember what happened here.\" She lowers the camera. \"Also, I haven't eaten in two days, so.\""
+    },
+    {
+      "name": "Colt Jennings",
+      "personality": "volatile",
+      "combat": 8, "medical": 1, "mechanical": 5, "scavenging": 4,
+      "backstory": "Did time in state prison for armed robbery. The outbreak broke the walls. Violent past, unpredictable present. Dangerous to zombies and potentially to the crew. But God help you, the man can fight.",
+      "is_romanceable": 0,
+      "intro_dialogue": "He's leaning against a burned-out police cruiser, spinning a hunting knife between his fingers. Prison tattoos crawl up his neck. He looks at the bus like he's sizing it up for a score. \"I ain't gonna pretend I'm a good person. But I'm alive, and the good people aren't. Make of that what you will.\""
+    },
+    {
+      "name": "Iris Tanaka",
+      "personality": "gentle",
+      "combat": 1, "medical": 6, "mechanical": 2, "scavenging": 5,
+      "backstory": "Was a hospice caretaker before the world ended. Spent her career helping people die with dignity. Now she's trying to help people live. Quietly strong in a way most people don't notice until they need it.",
+      "is_romanceable": 1,
+      "intro_dialogue": "She's sitting with a dead man, holding his hand. The body has been dead for hours — maybe days — but she's still holding on. She looks up at you with red-rimmed eyes. \"He didn't have anyone. I didn't want him to be alone.\" A pause. \"Do you have room for one more living person?\""
     }
   ]
 }
