@@ -266,7 +266,7 @@ def run():
         actions = [
             f"Explore — Scavenge for supplies{phase_warning}",
             "Upgrade / Repair — Improve or fix the bus",
-            "Rest — Recover HP and stamina (costs Food)",
+            "Rest — Recover HP and stamina (costs Food, or use Medicine for major heal)",
             "Interact — Talk to a crew member",
             "Check Crew — View detailed crew status",
             "Check Bus — View bus component status",

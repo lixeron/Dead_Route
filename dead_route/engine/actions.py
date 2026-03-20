@@ -455,11 +455,126 @@ def _do_install_upgrade():
 
 
 def do_rest():
-    """Handle the Rest action."""
+    """Handle the Rest action. Offers medicine triage if wounded crew + meds available."""
     crew = queries.get_alive_crew()
     resources = queries.get_resources()
     state = queries.get_game_state()
 
+    # Check for wounded crew who could benefit from medicine
+    wounded = [c for c in crew if c["hp"] < c["hp_max"]]
+    has_meds = resources["medicine"] > 0
+
+    if wounded and has_meds:
+        # Offer the choice: rest normally or use medicine
+        options = ["Rest — Share food, recover a little (costs Food)"]
+
+        # Build medicine option with triage target selection
+        worst_wounded = sorted(wounded, key=lambda c: c["hp"] / max(1, c["hp_max"]))
+        med_desc = f"Use Medicine — Major healing on one crew member (costs 1 Medicine + Food)"
+        options.append(med_desc)
+        options.append("Cancel")
+
+        idx = get_choice(options, prompt="How should the crew recover?")
+
+        if idx == 2:
+            return
+        elif idx == 1:
+            # ── MEDICINE TRIAGE ──
+            _do_medicine_triage(crew, wounded, state)
+            return
+
+    # ── NORMAL REST ──
+    _do_normal_rest(crew, resources, state)
+
+
+def _do_medicine_triage(crew: list, wounded: list, state: dict):
+    """Administer medicine to a specific crew member for major healing."""
+    resources = queries.get_resources()
+
+    # Pick who gets the medicine
+    if len(wounded) == 1:
+        target = wounded[0]
+        hp_pct = int(target["hp"] / max(1, target["hp_max"]) * 100)
+        narrator_text(
+            f"{target['name']} is the only one who needs it. "
+            f"HP: {target['hp']}/{target['hp_max']} ({hp_pct}%)"
+        )
+    else:
+        # Multiple wounded — the player must choose
+        names = []
+        for c in sorted(wounded, key=lambda x: x["hp"]):
+            hp_pct = int(c["hp"] / max(1, c["hp_max"]) * 100)
+            infection_tag = ""
+            if c.get("infected"):
+                infection_tag = styled(" [INFECTED]", Theme.DAMAGE)
+            names.append(
+                f"{c['name']} — HP: {c['hp']}/{c['hp_max']} ({hp_pct}%){infection_tag}"
+            )
+
+        narrator_text(
+            "One dose. Multiple wounded. Someone has to choose who gets it."
+        )
+        idx = get_choice(names, prompt="Who receives the medicine?")
+        target = sorted(wounded, key=lambda x: x["hp"])[idx]
+
+    # Administer the medicine
+    queries.update_resources(medicine=-1)
+
+    # Medicine heals significantly — 40-60 HP depending on phase
+    from engine.balance import get_balance
+    base_heal = 50
+    phase_bonus = {"morning": 0, "afternoon": 5, "evening": 10, "midnight": 15}
+    heal_amount = base_heal + phase_bonus.get(state["current_phase"], 0)
+
+    queries.heal_character(target["id"], heal_amount)
+
+    # Feed the crew too (rest still costs food)
+    food_cost = max(1, len(crew))
+    if resources["food"] >= food_cost:
+        queries.update_resources(food=-food_cost)
+    else:
+        food_cost = resources["food"]
+        if food_cost > 0:
+            queries.update_resources(food=-food_cost)
+
+    # Stamina recovery for everyone
+    for c in crew:
+        new_stam = min(c["stamina_max"], c["stamina"] + 25)
+        queries.update_character(c["id"], stamina=new_stam)
+
+    # Narrative
+    name = target["name"]
+    narrator_text(
+        f"You kneel beside {name} and break the seal on the medicine kit. "
+        f"Antiseptic first — {name} hisses through clenched teeth as the "
+        f"solution hits raw flesh. Then bandages, tight and clean. Finally "
+        f"the good stuff — painkillers, antibiotics, the real medicine that "
+        f"nobody manufactures anymore."
+    )
+    dramatic_pause(0.3)
+
+    narrator_text(
+        f"The effect is visible within minutes. The tension drains from "
+        f"{name}'s face. The breathing steadies. Color returns to skin "
+        f"that had been going grey. It's not a miracle — the wounds are "
+        f"still there, the scars will remain. But {name} is going to "
+        f"keep fighting."
+    )
+
+    # Trust impact — the person you healed is grateful, others are neutral
+    if not target.get("is_player"):
+        queries.change_trust(target["id"], 8)
+
+    audio.play_sfx("loot")  # Satisfying "item used" sound
+    status_update(f"-1 Medicine. {name} healed for {heal_amount} HP.")
+    if food_cost > 0:
+        status_update(f"-{food_cost} Food consumed.")
+    status_update(f"+25 Stamina restored for all crew.")
+    press_enter()
+
+
+def _do_normal_rest(crew: list, resources: dict, state: dict):
+    """Standard rest — small healing for everyone, costs food."""
     food_cost = max(1, len(crew))
 
     if resources["food"] < food_cost:
@@ -472,8 +587,15 @@ def do_rest():
     if food_cost > 0:
         queries.update_resources(food=-food_cost)
 
-    recovery = {"morning": 8, "afternoon": 12, "evening": 18, "midnight": 22}
-    heal_amount = recovery.get(state["current_phase"], 12)
+    # Era-scaled healing
+    from engine.balance import get_balance
+    era_healing = get_balance("REST_HEALING")
+    if era_healing and isinstance(era_healing, dict):
+        heal_amount = era_healing.get(state["current_phase"], 12)
+    else:
+        heal_amount = {"morning": 8, "afternoon": 12, "evening": 18, "midnight": 22}.get(
+            state["current_phase"], 12
+        )
 
     if food_cost == 0:
         heal_amount = 3
