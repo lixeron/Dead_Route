@@ -7,9 +7,11 @@
 
 **A zombie survival roguelite where every choice scars you — literally.**
 
-Dead Route is a text-based survival game where you manage a crew of survivors on an armored school bus, traveling across a post-apocalyptic wasteland toward Haven. Every day brings impossible choices: who eats, who fights, who you leave behind. Crew members get infected, develop PTSD, lose eyes and limbs. The bus breaks down. The dead don't stop. And sometimes, the game notices what you've done.
+Dead Route is a text-based survival game where you manage a crew of survivors on an armored school bus, traveling across a post-apocalyptic wasteland toward a place called Haven. Every day brings impossible choices: who eats, who fights, who you leave behind. Crew members get infected, develop PTSD, lose eyes and limbs. The bus breaks down. The dead don't stop. And sometimes, the game notices what you've done.
 
-> *"Zombie Oregon Trail meets Darkest Dungeon, written by someone who's read The Road too many times."*
+Heavily inspired by Undertale, Last of Us, Death Road to Canada, 60 Seconds!, Detroit Become Human, and more.
+Idea stemmed from the AI slop ads that show gameplay that doesn't correlate with the actual game itself. 
+Decided to use the interesting concept, add to it, and turn it into a playable game.
 
 ---
 
@@ -23,8 +25,8 @@ Dead Route is a text-based survival game where you manage a crew of survivors on
 - **4th wall breaking event** — the game watches your dark choices and responds
 - **Three-era difficulty curve** — learn, struggle, survive (Days 1-7, 8-14, 15+)
 - **Direction system** — progress bar, milestones, NPC hints, secret ending breadcrumbs
-- **Audio system** — 14 phase-based music tracks, 5 SFX triggers, per-phase atmosphere
-- **Interruptible text** — typewriter effect with skip support (press Enter)
+- **Audio system** — 14 phase-based music tracks, 5 SFX triggers, per-phase atmosphere [CURRENTLY DOESN'T WORK]
+- **Interruptible text** — typewriter effect with skip support (press Enter) [CURRENTLY DOESN'T WORK]
 
 ## Quick Start
 
@@ -160,11 +162,11 @@ This Python CLI version is the MVP and reference implementation. A Godot 4.x gra
 - Audio crossfading between phases
 - Screen shake, weather particles, and shader effects
 
-See the [Production Bible](docs/) for the complete transition plan.
+Look at document to understand the transition plan and implementation.
 
 ## Contributing
 
-This is a solo project in active development. Bug reports and feedback welcome via Issues.
+This is a solo project in active development. Transitioning to Godot.
 
 ## License
 
