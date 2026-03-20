@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.tar.gz
+.git/
+.github/
+.pytest_cache/
+.mypy_cache/
+tests/
+docs/
+*.md
+Makefile
+docker-compose.yml
+.dockerignore
+.gitignore
+.env

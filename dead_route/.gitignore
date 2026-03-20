@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Database
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+test-results.xml
+
+# Docker
+.env
+
+# Audio (user-provided, not tracked)
+dead_route/audio/music/*.mp3
+dead_route/audio/music/*.ogg
+dead_route/audio/music/*.wav
+dead_route/audio/music/*.flac
+dead_route/audio/sfx/*.mp3
+dead_route/audio/sfx/*.ogg
+dead_route/audio/sfx/*.wav
+dead_route/audio/sfx/*.flac
+
+# Archives
+*.tar.gz

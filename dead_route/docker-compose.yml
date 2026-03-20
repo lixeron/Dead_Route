@@ -1,0 +1,12 @@
+services:
+  game:
+    build: .
+    container_name: dead-route
+    stdin_open: true    # -i flag: interactive input
+    tty: true           # -t flag: terminal allocation
+    volumes:
+      # Persist save data between runs
+      - save-data:/app/dead_route
+
+volumes:
+  save-data:
