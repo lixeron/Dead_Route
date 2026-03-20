@@ -28,7 +28,7 @@ Dead Route is a text-based survival game where you manage a crew of survivors on
 ### Run locally (no dependencies beyond Python 3.11+)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dead-route.git
+git clone https://github.com/lixeron/Dead_Route.git
 cd dead-route
 make run
 ```
