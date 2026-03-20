@@ -226,6 +226,10 @@ def run():
             handle_game_over()
             return
 
+        # ── Coin discovery (days 2-7, once per run) ──
+        from engine.coin import check_coin_discovery
+        check_coin_discovery()
+
         # ── 4th wall check (rare, dark-choice dependent) ──
         from engine.fourth_wall import should_trigger, run_fourth_wall_event
         if should_trigger():

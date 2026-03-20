@@ -91,6 +91,14 @@ def do_explore():
         press_enter()
         return
 
+    # ── COIN FLIP MOMENT CHECK (~15% chance if player has coin) ──
+    from engine.coin import get_random_coin_moment, offer_coin_flip
+    coin_moment = get_random_coin_moment()
+    if coin_moment:
+        result = offer_coin_flip(**coin_moment)
+        press_enter()
+        return
+
     # Combat chance — MUCH higher at night
     combat_chances = {
         "morning": 0.25, "afternoon": 0.40,
