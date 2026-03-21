@@ -225,7 +225,7 @@ This Python CLI version is the MVP and reference implementation. A Godot 4.x gra
 - Screen shake, weather particles, and shader effects
 - Click-to-interact with character sprites on the bus
 
-See the Production Bible for the complete transition plan.
+See the transition documentation for the complete transition plan.
 
 ## Contributing
 
