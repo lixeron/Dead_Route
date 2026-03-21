@@ -1,6 +1,6 @@
-# 🧟 DEAD ROUTE
+# PROJECT DEAD ROUTE
 
-[![CI](https://github.com/YOUR_USERNAME/dead-route/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/dead-route/actions/workflows/ci.yml)
+[![CI](https://github.com/lixeron/Dead_Route/actions/workflows/ci.yml/badge.svg)](https://github.com/lixeron/Dead_Route/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -33,8 +33,8 @@ Decided to use the interesting concept, add to it, and turn it into a playable g
 ### Run locally (no dependencies beyond Python 3.11+)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dead-route.git
-cd dead-route
+git clone https://github.com/lixeron/Dead_Route.git
+cd dead_route
 make run
 ```
 
@@ -174,4 +174,3 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-*"The dead don't mourn. They just keep walking."*

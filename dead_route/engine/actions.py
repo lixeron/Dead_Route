@@ -184,48 +184,119 @@ def _resolve_explore_combat(explorer: dict):
 
 
 def _resolve_explore_scavenge(explorer: dict):
-    """Peaceful scavenging during exploration."""
+    """Peaceful scavenging during exploration with era-appropriate encounters."""
     scav_skill = explorer.get("scavenging", 3)
     hp_ratio = explorer["hp"] / max(1, explorer["hp_max"])
     effective_scav = scav_skill if hp_ratio > 0.5 else max(1, scav_skill - 2)
 
+    from engine.balance import get_era, get_balance
+    era = get_era()
+    scav_mult = get_balance("SCAVENGE_MULTIPLIER") or 1.0
+
     loot = {}
-    if random.random() < 0.2 + effective_scav * 0.04:
-        loot["fuel"] = random.randint(1, 2 + effective_scav // 3)
-    if random.random() < 0.3 + effective_scav * 0.04:
-        loot["food"] = random.randint(1, 2 + effective_scav // 3)
-    if random.random() < 0.25 + effective_scav * 0.03:
-        loot["scrap"] = random.randint(1, 2 + effective_scav // 3)
-    if random.random() < 0.10:
+    if random.random() < (0.2 + effective_scav * 0.04) * scav_mult:
+        loot["fuel"] = random.randint(1, max(1, int((2 + effective_scav // 3) * scav_mult)))
+    if random.random() < (0.3 + effective_scav * 0.04) * scav_mult:
+        loot["food"] = random.randint(1, max(1, int((2 + effective_scav // 3) * scav_mult)))
+    if random.random() < (0.25 + effective_scav * 0.03) * scav_mult:
+        loot["scrap"] = random.randint(1, max(1, int((2 + effective_scav // 3) * scav_mult)))
+    if random.random() < 0.10 * scav_mult:
         loot["ammo"] = random.randint(1, 2)
-    if random.random() < 0.05:
+    if random.random() < 0.05 * scav_mult:
         loot["medicine"] = 1
 
     queries.update_character(explorer["id"], stamina=max(0, explorer["stamina"] - 15))
 
+    name = explorer["name"]
+
     if loot:
-        location_descs = [
-            "an overturned truck", "a ransacked convenience store",
-            "an abandoned house", "a wrecked cruiser",
-            "a looted camping store", "a church basement",
-            "a crashed ambulance", "a burned-out diner",
-        ]
-        narrator_text(
-            f"{explorer['name']} picks through {random.choice(location_descs)} "
-            f"and comes back with what they could carry."
-        )
+        # Era-gated scavenge narratives — the world gets worse
+        if era == "breathing":
+            descs = [
+                f"{name} finds an overturned supply truck. The cab is empty — driver long gone or long dead. But the cargo is intact. Canned food, bottled water, a first aid kit wedged under the seat.",
+                f"An abandoned house with the door still locked. {name} breaks a window and climbs in. It smells like dust and old carpet. The pantry has canned goods, and there's a jerry can of fuel in the garage.",
+                f"{name} searches a ransacked convenience store. Most of the shelves are bare, but behind the counter there's a locked cabinet the looters missed. Inside: the good stuff.",
+                f"A church basement. Someone tried to set up a shelter here — cots, water jugs, a prayer circle drawn in chalk on the floor. They're gone now. The supplies they left behind aren't.",
+                f"A crashed ambulance on its side. The windshield is shattered, the driver's seat is painted with dried blood. But the supply compartment in the back is intact. {name} pries it open and finds medical supplies and clean water.",
+            ]
+        elif era == "squeeze":
+            descs = [
+                f"{name} picks through the wreckage of a pharmacy. Most of the drugs are gone or expired, but in the back office — behind a desk barricaded with filing cabinets — someone hoarded supplies. There's a body in the chair. Been dead for weeks. Mummified in the dry air. {name} steps around it and takes what's useful.",
+                f"An apartment building. {name} goes floor by floor. The first three are picked clean. The fourth has a locked door with scratching sounds behind it. {name} skips it. The fifth floor has a dead couple on the couch, holding hands, a bottle of pills between them. The kitchen still has food.",
+                f"A wrecked military convoy. Two Humvees and a supply truck, all shot to hell. Bullet holes and dark stains everywhere. Something terrible happened here — the brass casings are ankle-deep. {name} avoids the bodies and checks the truck bed.",
+                f"A veterinary clinic. The kennels in the back are open and empty — someone released the animals. Or something got in. The medical supplies are veterinary grade, but antibiotics are antibiotics. {name} loads up.",
+                f"The basement of a gun shop. The display cases upstairs are smashed and empty, but the store room beneath the floor has a hidden compartment. Inside: ammo, a cleaning kit, and a note that says 'FOR WHEN THEY COME BACK.'",
+            ]
+        else:  # endgame
+            descs = [
+                f"{name} searches a settlement that died recently. Not months ago — days. The fires are still warm. Bodies in the street, some of them half-eaten, some of them still twitching in that way that means they'll be standing up soon. {name} moves fast, grabbing what's left before the dead finish their meal and come looking for dessert.",
+                f"A hospital. The kind of place that should have everything. It has almost nothing. Every room has been stripped — even the IV bags are gone. But in the morgue, in the cold storage nobody wanted to open, {name} finds a cache someone hid among the body bags. Smart. Disgusting. Effective.",
+                f"The remains of a survivor camp. Tents, a fire pit, a perimeter of sharpened stakes. Something broke through anyway. The stakes are decorated with viscera — intestines looped around the wood like Christmas garlands, drying in the sun. {name} tries not to look while searching the tents.",
+                f"A school bus. Not like yours — this one didn't make it. The windshield is gone, the sides are dented inward, and the interior is a slaughterhouse. Tiny backpacks soaked black with old blood. {name} finds supplies under the seats and leaves faster than they've ever moved.",
+                f"A water treatment plant. The machinery still hums — solar powered, running on autopilot for a dead city. The break room has vending machines that {name} crowbars open. The control room has a body slumped over the console, one hand on the emergency shutoff. They died keeping the water clean. {name} salutes them and takes the supplies.",
+            ]
+
+        narrator_text(random.choice(descs))
         queries.update_resources(**loot)
         audio.play_sfx("loot")
         loot_display(loot)
+
+        # Rare explore vignettes — small moments of world-building
+        if random.random() < 0.25:
+            _explore_vignette(name, era)
     else:
-        empty_descs = [
-            "Nothing. Picked clean. Someone was here before you.",
-            "Empty shelves, empty drawers, empty hope. The area's been stripped.",
-            "Cobwebs and dust. Whatever was here is long gone.",
+        if era == "breathing":
+            empty_descs = [
+                f"{name} searches for an hour and comes back empty-handed. \"Nothing. Somebody got here first.\"",
+                f"Empty shelves, empty drawers, empty hope. {name} kicks a display rack in frustration. The sound echoes.",
+                f"Cobwebs and dust. Whatever was here is long gone. {name} pockets a deck of playing cards out of sheer boredom.",
+            ]
+        elif era == "squeeze":
+            empty_descs = [
+                f"{name} comes back with nothing. Hollow-eyed. \"Everything's gone. Every house, every store, every car. It's like the whole world was vacuumed clean.\"",
+                f"Two hours of searching. Nothing. {name} sits on the bus steps and stares at their hands. The calluses are thick enough to feel like someone else's skin.",
+                f"Empty. Not even the corpses have anything useful anymore. {name} catches themselves checking a dead man's pockets and stops. Sits down. Breathes. Gets back on the bus.",
+            ]
+        else:
+            empty_descs = [
+                f"{name} returns ashen-faced and empty-handed. Doesn't explain. Doesn't need to. Whatever they saw out there, it wasn't supplies.",
+                f"Nothing. The area has been scoured so thoroughly that even the wallpaper has been peeled off — somebody tried to eat the paste. {name} dry-heaves and comes back to the bus.",
+                f"{name} was gone for three hours. Comes back with nothing except a thousand-yard stare and blood under their fingernails that isn't theirs.",
+            ]
+        narrator_text(random.choice(empty_descs))
+
+
+def _explore_vignette(name: str, era: str):
+    """Small environmental storytelling moments during exploration."""
+    from engine.balance import get_era
+
+    if era == "breathing":
+        vignettes = [
+            f"{name} finds a child's drawing on a refrigerator. A family of four, a house, a yellow sun. The artist signed it 'EMMA, AGE 6' in wobbly letters. {name} leaves it where it is.",
+            f"A dog follows {name} back to the bus. Skinny, ribs showing, but tail wagging. It sits outside the door and watches with brown eyes that haven't given up yet. Someone feeds it a scrap.",
+            f"{name} finds a phone on the ground. Dead, of course. But the lock screen photo is still visible: two people kissing at a wedding. {name} puts it back face-down.",
+            f"Graffiti on a wall: 'THE ARMY IS COMING.' Below it, in different paint: 'THE ARMY CAME AND LEFT.' Below that: 'WE'RE STILL HERE.'",
+            f"A greenhouse behind a house, miraculously intact. Tomatoes growing wild. Herbs going to seed. {name} takes what they can carry and leaves the rest growing. Maybe someone else will find it.",
         ]
-        narrator_text(
-            f"{explorer['name']} comes back empty-handed. {random.choice(empty_descs)}"
-        )
+    elif era == "squeeze":
+        vignettes = [
+            f"In an attic, {name} finds a journal. The last entry is two sentences: 'Day 47. I can hear them in the walls.' The pages after that are blank.",
+            f"{name} passes a telephone pole covered in MISSING posters. Hundreds of them, layered deep, faces staring out from under faces. The rain has turned them into a papier-mâché monument to everyone who was lost.",
+            f"A bathtub full of rainwater with a dead crow floating in it. On the wall above: tallies. Someone was counting days. The count stops at 83.",
+            f"Handprints on a window. Small ones — a child's. They're on the INSIDE. The glass isn't broken. {name} doesn't open the door.",
+            f"A pet store. The tanks are dry, the cages are open. But in the back, in a terrarium sealed with duct tape, a gecko sits on a heat rock. Alive. Waiting. {name} doesn't take it. Some things deserve to outlive us.",
+        ]
+    else:
+        vignettes = [
+            f"A pile of shoes outside a building. Hundreds of them. Every size. {name} stares at it for a long time, trying to figure out why, and then realizes they don't want to know.",
+            f"{name} finds a room where someone tried to perform surgery. Kitchen table, duct tape restraints, a hacksaw, and more blood than one body should hold. Whatever they were trying to save, they didn't.",
+            f"A school gymnasium converted into a morgue. Bodies in rows, covered in tarps, numbered with spray paint. The count reaches 412. Someone was organizing the dead. Someone who cared enough to give them numbers.",
+            f"A wall of Polaroids. Every photo is a face. Below each face, a name and a date. Some dates are crossed out and replaced with a second date. Birth. Death. Someone built a memorial out of instant photos. {name} takes a photo of the wall with Zara's camera. If they have it.",
+            f"A message painted across a highway overpass in letters ten feet tall: 'GOD HAS ABANDONED THIS PLACE.' Below it, someone smaller wrote: 'good. he was holding us back.'",
+        ]
+
+    narrator_text(random.choice(vignettes))
+    dramatic_pause(0.3)
 
 
 def _resolve_push_explore(explorer: dict, event: dict):

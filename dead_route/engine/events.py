@@ -30,18 +30,35 @@ def load_events() -> list[dict]:
 
 
 def get_eligible_events() -> list[dict]:
-    """Return events whose preconditions are met."""
+    """Return events whose preconditions are met, including day-gating from balance config."""
     events = load_events()
     state = queries.get_game_state()
     crew = queries.get_alive_crew()
     flags = queries.get_all_flags()
+
+    # Import day gates from balance config
+    try:
+        from engine.balance import EVENT_DAY_GATES
+    except ImportError:
+        EVENT_DAY_GATES = {}
+
     eligible = []
 
     for event in events:
         pre = event.get("preconditions", {})
 
-        # Day check
+        # Balance config day-gate override (takes priority)
+        gate = EVENT_DAY_GATES.get(event["id"])
+        if gate:
+            if state["current_day"] < gate.get("min_day", 0):
+                continue
+            if state["current_day"] > gate.get("max_day", 999):
+                continue
+
+        # JSON precondition day check
         if state["current_day"] < pre.get("min_day", 0):
+            continue
+        if "max_day" in pre and state["current_day"] > pre["max_day"]:
             continue
 
         # Crew size check
